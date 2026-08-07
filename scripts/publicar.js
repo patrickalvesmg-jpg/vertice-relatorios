@@ -1,12 +1,15 @@
-// Empacota o dashboard da Vertice num HTML unico e protegido por senha.
+// Empacota o dashboard da Vertice em paginas protegidas por senha,
+// UMA POR CLIENTE.
 //
 // Uso: node scripts/publicar.js
 //
-// O que ele faz:
-//   1. le o dashboard.html original (fonte da verdade, nao e copiado no repo)
-//   2. le os JSONs de dados dos clientes
-//   3. criptografa os dados com AES-GCM usando a senha
-//   4. embute tudo num unico index.html
+// Gera:
+//   docs/index.html            indice com os clientes
+//   docs/<slug>/index.html     relatorio daquele cliente
+//
+// Cada pasta leva SOMENTE os dados do proprio cliente. Assim o link de um
+// cliente nao da acesso aos numeros de outro, mesmo com a senha correta —
+// os dados dos demais simplesmente nao estao naquele arquivo.
 //
 // Por que embutir em vez de servir JSON separado: no GitHub Pages qualquer
 // arquivo e acessivel por URL direta. Uma tela de senha em JS esconderia a
@@ -156,40 +159,8 @@ document.getElementById('fSenha').addEventListener('submit', async (e) => {
 `;
 }
 
-// ---------------------------------------------------------------
-function main() {
-  const senha = lerSenha();
-
-  const arquivoDash = path.join(ORIGEM, 'dashboard.html');
-  if (!fs.existsSync(arquivoDash)) {
-    console.error(`\nNao encontrei o dashboard em:\n  ${arquivoDash}\n`);
-    process.exit(1);
-  }
-
-  let html = fs.readFileSync(arquivoDash, 'utf8');
-
-  // --- junta o indice e os dados de cada cliente num pacote so ---
-  const indice = JSON.parse(fs.readFileSync(path.join(DADOS, 'clientes.json'), 'utf8'));
-  const ativos = (indice.clientes || []).filter((c) => c.ativo !== false);
-
-  if (!ativos.length) {
-    console.error('\nNenhum cliente ativo em dados/clientes.json.\n');
-    process.exit(1);
-  }
-
-  const cofre = { 'dados/clientes.json': indice };
-  for (const c of ativos) {
-    const arq = path.join(DADOS, `${c.slug}.json`);
-    if (!fs.existsSync(arq)) {
-      console.log(`  aviso: ${c.slug}.json nao encontrado, cliente ignorado`);
-      continue;
-    }
-    cofre[`dados/${c.slug}.json`] = JSON.parse(fs.readFileSync(arq, 'utf8'));
-    console.log(`  incluido: ${c.nome}`);
-  }
-
-  const pacote = criptografar(JSON.stringify(cofre), senha);
-
+// Aplica no dashboard original as mudancas comuns a todos os clientes.
+function prepararBase(html) {
   // --- o painel busca por fetch; aqui ele passa a ler do cofre ---
   // Regex em vez de texto literal: nao depende de CRLF/LF nem de espacos.
   const reCarregar = /async\s+function\s+carregarJSON\s*\([^)]*\)\s*\{[\s\S]*?\n\}/;
@@ -218,17 +189,146 @@ function main() {
     '/* iniciar() e chamado pelo portao de senha, apos decifrar. */' +
     html.slice(ultima + autoStart.length);
 
-  // --- injeta o portao e o noindex ---
-  html = html.replace('</head>',
+  // --- abre em 2 meses em vez de 30 dias ---
+  // O painel chamava aplicar('30'); o filtro de 2 meses e por data, entao
+  // usamos os proprios limites da serie.
+  html = html.replace(
+    /aplicar\(\s*'30'\s*\)\s*;/,
+    `(function(){
+    /* abre nos ultimos 2 meses de dados, nao em 30 dias */
+    const s=DADOS.serie_diaria||[];
+    if(!s.length) return aplicar('tudo');
+    const fim=s[s.length-1].data;
+    const ini=addDias(fim,-61);
+    const de=(s[0].data>ini)?s[0].data:ini;
+    el('fDe').value=de; el('fAte').value=fim;
+    FILTRO={de:de,ate:fim};
+    document.querySelectorAll('.f-btn').forEach(b=>b.classList.remove('on'));
+    render();
+  })();`
+  );
+
+  // --- o seletor de cliente nao faz sentido numa pagina de um cliente so ---
+  html = html.replace(
+    /function\s+montarSeletor\s*\([^)]*\)\s*\{[\s\S]*?\n\}/,
+    `function montarSeletor(ativos,atual){
+  /* Publicado: uma pagina por cliente, entao o seletor fica oculto. */
+  const s=el('selCliente');
+  if(s) s.style.display='none';
+}`
+  );
+
+  // --- noindex ---
+  return html.replace('</head>',
     '<meta name="robots" content="noindex, nofollow">\n</head>');
-  html = html.replace('</body>', telaSenha(pacote) + '\n</body>');
+}
+
+// Pagina de indice: lista os clientes publicados. Sem dado nenhum.
+function paginaIndice(ativos) {
+  const itens = ativos.map((c) => `
+      <a class="item" href="${c.slug}/">
+        <span class="nome">${c.nome}</span>
+        <span class="seg">${c.segmento || ''}</span>
+        <span class="seta">→</span>
+      </a>`).join('');
+
+  return `<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>Relatórios — Vértice Assessoria</title>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#0B0920;color:#fff;font-family:Montserrat,system-ui,sans-serif;
+  min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px}
+.wrap{width:100%;max-width:440px}
+.marca{font-size:21px;font-weight:800;letter-spacing:.14em;text-align:center;margin-bottom:6px}
+.marca span{color:#A855F7}
+.sub{font-size:12.5px;color:rgba(255,255,255,.45);text-align:center;
+  letter-spacing:.04em;margin-bottom:34px}
+.item{display:flex;align-items:center;gap:14px;padding:18px 20px;margin-bottom:10px;
+  border-radius:13px;background:rgba(255,255,255,.03);
+  border:1px solid rgba(168,85,247,.13);text-decoration:none;color:#fff;
+  transition:background .15s,border-color .15s}
+.item:hover{background:rgba(168,85,247,.09);border-color:rgba(168,85,247,.32)}
+.nome{font-size:15px;font-weight:600}
+.seg{font-size:11px;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:.08em}
+.seta{margin-left:auto;color:#A855F7;font-size:17px}
+.rodape{margin-top:30px;text-align:center;font-size:11.5px;color:rgba(255,255,255,.25)}
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="marca">VÉRTICE<span>.</span></div>
+    <div class="sub">Relatórios de tráfego</div>
+    ${itens}
+    <div class="rodape">Acesso restrito · cada relatório exige senha</div>
+  </div>
+</body>
+</html>`;
+}
+
+// ---------------------------------------------------------------
+function main() {
+  const senha = lerSenha();
+
+  const arquivoDash = path.join(ORIGEM, 'dashboard.html');
+  if (!fs.existsSync(arquivoDash)) {
+    console.error(`\nNao encontrei o dashboard em:\n  ${arquivoDash}\n`);
+    process.exit(1);
+  }
+
+  const base = prepararBase(fs.readFileSync(arquivoDash, 'utf8'));
+
+  const indice = JSON.parse(fs.readFileSync(path.join(DADOS, 'clientes.json'), 'utf8'));
+  const ativos = (indice.clientes || []).filter((c) => c.ativo !== false);
+
+  if (!ativos.length) {
+    console.error('\nNenhum cliente ativo em dados/clientes.json.\n');
+    process.exit(1);
+  }
 
   fs.mkdirSync(SAIDA, { recursive: true });
-  fs.writeFileSync(path.join(SAIDA, 'index.html'), html, 'utf8');
   fs.writeFileSync(path.join(SAIDA, '.nojekyll'), '', 'utf8');
 
-  const kb = (Buffer.byteLength(html, 'utf8') / 1024).toFixed(0);
-  console.log(`\nGerado docs/index.html (${kb} KB)`);
+  const publicados = [];
+
+  for (const c of ativos) {
+    const arq = path.join(DADOS, `${c.slug}.json`);
+    if (!fs.existsSync(arq)) {
+      console.log(`  aviso: ${c.slug}.json nao encontrado, cliente ignorado`);
+      continue;
+    }
+
+    const dados = JSON.parse(fs.readFileSync(arq, 'utf8'));
+
+    // O cofre desta pagina leva SO este cliente. O indice tambem vai
+    // reduzido a ele, senao o painel listaria os outros no seletor.
+    const cofre = {
+      'dados/clientes.json': { ...indice, clientes: [c] },
+      [`dados/${c.slug}.json`]: dados,
+    };
+
+    const pacote = criptografar(JSON.stringify(cofre), senha);
+    const html = base.replace('</body>', telaSenha(pacote) + '\n</body>');
+
+    const pasta = path.join(SAIDA, c.slug);
+    fs.mkdirSync(pasta, { recursive: true });
+    fs.writeFileSync(path.join(pasta, 'index.html'), html, 'utf8');
+
+    const kb = (Buffer.byteLength(html, 'utf8') / 1024).toFixed(0);
+    const ate = dados.periodo_disponivel?.ate || '?';
+    console.log(`  ${c.slug}/  ${c.nome} (${kb} KB, dados ate ${ate})`);
+    publicados.push(c);
+  }
+
+  fs.writeFileSync(path.join(SAIDA, 'index.html'), paginaIndice(publicados), 'utf8');
+
+  console.log(`\n${publicados.length} relatorio(s) gerado(s) em docs/`);
+  console.log('Cada pagina leva apenas os dados do proprio cliente.');
   console.log('Dados criptografados com AES-256-GCM. Sem a senha, nada legivel.');
 }
 
