@@ -1,14 +1,20 @@
 # ============================================================
 # A SENHA NUNCA VAI PARA O GITHUB
 # Ela e o que protege os dados dos clientes no site publicado.
+# No GitHub Actions ela vem do Secret SENHA_RELATORIOS.
 # ============================================================
 senha.txt
+.env
 
-# Dados brutos dos clientes (ficam em vertice/dashboards/trafego/dados/).
-# No site eles entram criptografados dentro do docs/index.html.
-dados/
-*.json
-!package.json
+# ============================================================
+# Dados brutos dos clientes.
+# No site eles entram criptografados dentro do HTML; em texto
+# claro nao podem ir para o repositorio (que e publico).
+# O indice de clientes nao tem numero nenhum e precisa subir,
+# porque a automacao le ele para saber o que publicar.
+# ============================================================
+scripts/dados/*.json
+!scripts/dados/clientes.json
 
 node_modules/
 *.log

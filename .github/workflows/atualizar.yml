@@ -1,0 +1,57 @@
+name: Atualizar relatórios
+
+# De hora em hora. Os dados da Meta têm atraso próprio de atribuição
+# (compras levam horas para estabilizar), então intervalo menor traria
+# pouca informação nova.
+on:
+  schedule:
+    - cron: '15 * * * *'
+  workflow_dispatch:        # permite rodar na mão pelo painel do GitHub
+
+# Necessário para o passo de commit conseguir escrever no repositório.
+permissions:
+  contents: write
+
+concurrency:
+  group: atualizar-relatorios
+  cancel-in-progress: false
+
+jobs:
+  publicar:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Puxar dados da Meta
+        env:
+          META_ACCESS_TOKEN: ${{ secrets.META_ACCESS_TOKEN }}
+          META_APP_ID: ${{ secrets.META_APP_ID }}
+          META_APP_SECRET: ${{ secrets.META_APP_SECRET }}
+          META_BUSINESS_ID: ${{ secrets.META_BUSINESS_ID }}
+          META_API_VERSION: v21.0
+        run: node scripts/meta/gerar-dados-dashboard.js cfc-academy
+
+      - name: Gerar as páginas protegidas
+        env:
+          SENHA: ${{ secrets.SENHA_RELATORIOS }}
+        run: |
+          printf '%s\n' "$SENHA" > senha.txt
+          node scripts/publicar.js
+          rm -f senha.txt
+
+      - name: Publicar se algo mudou
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add docs/
+          if git diff --staged --quiet; then
+            echo "Nada mudou nesta rodada."
+          else
+            git commit -m "Atualiza relatórios [automático]"
+            git push
+          fi

@@ -1,0 +1,827 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard de Tráfego — Vértice Assessoria</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0B0920; --bg2:#110D30;
+  --purple:#6B21E8; --lilac:#A855F7; --light:#C4B5FD;
+  --green:#4ade80; --red:#f87171; --yellow:#facc15; --blue:#38bdf8;
+  --card:rgba(255,255,255,0.03);
+  --border:rgba(168,85,247,0.13); --border2:rgba(168,85,247,0.25);
+  --text:rgba(255,255,255,0.35); --text2:rgba(255,255,255,0.60);
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html,body{overflow-x:hidden;max-width:100%;}
+body{font-family:'Montserrat',sans-serif;background:var(--bg);color:#fff;min-height:100vh;}
+
+#loader{position:fixed;inset:0;background:var(--bg);display:flex;flex-direction:column;
+  align-items:center;justify-content:center;gap:20px;z-index:200;}
+#loader.hidden{display:none;}
+.ld-logo{font-size:24px;font-weight:900;letter-spacing:4px;color:var(--light);}
+.ld-logo span{color:var(--lilac);}
+.ld-bar{width:240px;height:3px;background:rgba(168,85,247,0.10);border-radius:2px;overflow:hidden;}
+.ld-fill{height:100%;width:0;background:linear-gradient(90deg,var(--purple),var(--lilac));border-radius:2px;transition:width .15s linear;}
+.ld-txt{font-size:11px;font-weight:700;letter-spacing:3px;color:rgba(255,255,255,0.20);}
+
+#erro{min-height:100vh;display:none;align-items:center;justify-content:center;padding:40px 20px;}
+#erro.on{display:flex;}
+.err-box{max-width:520px;background:rgba(248,113,113,0.05);border:1px solid rgba(248,113,113,0.22);
+  border-radius:18px;padding:40px 36px;text-align:center;}
+.err-t{font-size:20px;font-weight:800;margin-bottom:10px;}
+.err-s{font-size:13px;color:var(--text2);line-height:1.8;}
+
+#dash{display:none;} #dash.on{display:block;}
+.hdr{background:rgba(11,9,32,0.92);border-bottom:1px solid var(--border);padding:14px 44px;
+  display:flex;justify-content:space-between;align-items:center;gap:20px;
+  position:sticky;top:0;z-index:100;backdrop-filter:blur(16px);flex-wrap:wrap;}
+.hdr-l{display:flex;align-items:center;gap:16px;min-width:0;}
+.hdr-logo{font-size:14px;font-weight:900;letter-spacing:3px;color:var(--light);white-space:nowrap;}
+.hdr-logo span{color:var(--lilac);}
+.hdr-div{width:1px;height:22px;background:var(--border2);}
+.hdr-client{font-size:15px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.hdr-seg{font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;
+  color:var(--lilac);background:rgba(168,85,247,0.10);border:1px solid var(--border2);
+  padding:4px 10px;border-radius:20px;white-space:nowrap;}
+.hdr-sel{padding:8px 12px;background:rgba(255,255,255,0.04);border:1px solid var(--border2);
+  border-radius:8px;font-family:'Montserrat',sans-serif;font-size:12px;font-weight:600;
+  color:#fff;outline:none;cursor:pointer;}
+.hdr-sel option{background:var(--bg2);}
+
+/* ===== FILTRO ===== */
+.filtro{background:var(--card);border:1px solid var(--border);border-radius:14px;
+  padding:16px 20px;display:flex;align-items:center;gap:20px;flex-wrap:wrap;margin-bottom:26px;}
+.f-grp{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+.f-lbl{font-size:10px;font-weight:800;letter-spacing:1.4px;text-transform:uppercase;color:var(--text);}
+.f-btn{padding:7px 13px;background:rgba(255,255,255,0.04);border:1px solid rgba(168,85,247,0.18);
+  border-radius:8px;font-family:'Montserrat',sans-serif;font-size:11.5px;font-weight:700;
+  color:var(--text2);cursor:pointer;transition:all .15s;}
+.f-btn:hover{border-color:var(--border2);color:#fff;}
+.f-btn.on{background:linear-gradient(135deg,var(--purple),var(--lilac));border-color:transparent;color:#fff;}
+.f-date{padding:7px 11px;background:rgba(255,255,255,0.04);border:1px solid rgba(168,85,247,0.18);
+  border-radius:8px;font-family:'Montserrat',sans-serif;font-size:11.5px;font-weight:600;
+  color:#fff;outline:none;cursor:pointer;color-scheme:dark;}
+.f-date:focus{border-color:rgba(168,85,247,0.5);}
+.f-sep{color:var(--text);font-size:11px;font-weight:700;}
+.f-info{margin-left:auto;font-size:11px;font-weight:700;color:var(--lilac);white-space:nowrap;}
+
+.wrap{padding:26px 44px 64px;max-width:1440px;margin:0 auto;}
+.sec-t{font-size:11px;font-weight:800;letter-spacing:2.5px;text-transform:uppercase;
+  color:var(--lilac);margin:38px 0 16px;display:flex;align-items:center;gap:12px;}
+.sec-t::after{content:'';flex:1;height:1px;background:var(--border);}
+
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:16px;}
+.kpi{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:22px 24px;
+  position:relative;overflow:hidden;}
+.kpi::before{content:'';position:absolute;top:0;left:0;width:3px;height:100%;background:var(--lilac);opacity:.55;}
+.kpi.hero::before{background:linear-gradient(180deg,var(--purple),var(--lilac));opacity:1;width:4px;}
+.kpi-l{font-size:10px;font-weight:700;letter-spacing:1.6px;text-transform:uppercase;
+  color:var(--text);margin-bottom:10px;}
+.kpi-v{font-size:30px;font-weight:900;letter-spacing:-1px;line-height:1;}
+.kpi.hero .kpi-v{font-size:34px;color:var(--light);}
+.kpi-f{margin-top:11px;font-size:11px;font-weight:600;color:var(--text);}
+.meta-bar{margin-top:13px;}
+.meta-track{height:4px;background:rgba(255,255,255,0.06);border-radius:2px;overflow:hidden;}
+.meta-fill{height:100%;border-radius:2px;transition:width .5s ease;}
+.meta-txt{font-size:10px;font-weight:700;color:var(--text);margin-top:7px;}
+
+.card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:24px;}
+.card-t{font-size:13px;font-weight:700;margin-bottom:4px;}
+.card-s{font-size:11px;color:var(--text);margin-bottom:18px;}
+.chart-box{position:relative;height:300px;}
+.chart-box.sm{height:260px;}
+
+.tbl-wrap{overflow-x:auto;}
+table{width:100%;border-collapse:collapse;font-size:12px;min-width:600px;}
+thead th{text-align:left;font-size:10px;font-weight:800;letter-spacing:1.2px;text-transform:uppercase;
+  color:var(--text);padding:0 14px 12px;border-bottom:1px solid var(--border);white-space:nowrap;}
+thead th.num{text-align:right;}
+tbody td{padding:13px 14px;border-bottom:1px solid rgba(255,255,255,0.04);font-weight:600;}
+tbody td.num{text-align:right;font-variant-numeric:tabular-nums;}
+tbody tr:last-child td{border-bottom:none;}
+tbody tr:hover{background:rgba(168,85,247,0.03);}
+.nome{font-weight:700;}
+.pill{display:inline-block;padding:3px 9px;border-radius:20px;font-size:9px;font-weight:800;letter-spacing:.8px;}
+.pill.on{color:var(--green);background:rgba(74,222,128,0.10);}
+.pill.off{color:var(--text2);background:rgba(255,255,255,0.05);}
+.lnk{display:inline-flex;align-items:center;gap:5px;color:var(--lilac);text-decoration:none;
+  font-size:11px;font-weight:700;padding:5px 10px;border:1px solid var(--border2);
+  border-radius:7px;transition:all .15s;white-space:nowrap;}
+.lnk:hover{background:rgba(168,85,247,0.10);color:#fff;}
+.thumb{width:38px;height:38px;border-radius:7px;object-fit:cover;background:rgba(255,255,255,0.05);
+  border:1px solid var(--border);flex-shrink:0;}
+.cria-cell{display:flex;align-items:center;gap:11px;}
+
+.aviso{font-size:10.5px;color:var(--text);font-weight:600;margin-top:14px;line-height:1.6;
+  padding-left:11px;border-left:2px solid var(--border2);}
+
+/* ===== FUNIL ===== */
+.fn-linha{display:flex;align-items:center;gap:14px;margin-bottom:9px;}
+.fn-nome{width:190px;flex-shrink:0;font-size:12px;font-weight:700;text-align:right;}
+.fn-nome small{display:block;font-size:9.5px;font-weight:600;color:var(--text);letter-spacing:.5px;}
+.fn-track{flex:1;height:38px;background:rgba(255,255,255,0.03);border-radius:8px;
+  overflow:hidden;position:relative;min-width:60px;}
+.fn-fill{height:100%;border-radius:8px;display:flex;align-items:center;padding:0 14px;
+  font-size:13px;font-weight:800;transition:width .5s ease;min-width:52px;}
+.fn-taxa{width:92px;flex-shrink:0;font-size:11px;font-weight:700;color:var(--text2);}
+.fn-taxa b{color:var(--lilac);}
+@media(max-width:720px){
+  .fn-nome{width:104px;font-size:11px;}
+  .fn-taxa{width:56px;font-size:10px;}
+  .fn-fill{font-size:11.5px;padding:0 9px;}
+}
+.vazio{padding:44px 20px;text-align:center;font-size:12.5px;color:var(--text);line-height:1.8;font-weight:500;}
+.foot{margin-top:44px;padding-top:22px;border-top:1px solid var(--border);
+  display:flex;justify-content:space-between;gap:14px;flex-wrap:wrap;
+  font-size:10.5px;font-weight:600;color:rgba(255,255,255,0.22);}
+
+@media(max-width:720px){
+  .hdr{padding:12px 18px;} .hdr-div,.hdr-seg{display:none;}
+  .wrap{padding:20px 16px 48px;}
+  .filtro{padding:14px;gap:14px;} .f-info{margin-left:0;width:100%;}
+  .kpi-v{font-size:26px;} .kpi.hero .kpi-v{font-size:29px;}
+  .chart-box{height:250px;}
+}
+</style>
+</head>
+<body>
+
+<div id="loader">
+  <div class="ld-logo">VÉRTICE<span>.</span></div>
+  <div class="ld-bar"><div class="ld-fill" id="ldFill"></div></div>
+  <div class="ld-txt" id="ldTxt">CARREGANDO</div>
+</div>
+
+<div id="erro">
+  <div class="err-box">
+    <div class="err-t">Não foi possível carregar</div>
+    <div class="err-s" id="errMsg"></div>
+  </div>
+</div>
+
+<div id="dash">
+  <div class="hdr">
+    <div class="hdr-l">
+      <div class="hdr-logo">VÉRTICE<span>.</span></div>
+      <div class="hdr-div"></div>
+      <div class="hdr-client" id="hClient">—</div>
+      <div class="hdr-seg" id="hSeg"></div>
+    </div>
+    <select class="hdr-sel" id="selCliente" onchange="trocarCliente(this.value)"></select>
+  </div>
+
+  <div class="wrap">
+    <!-- FILTRO -->
+    <div class="filtro">
+      <div class="f-grp">
+        <span class="f-lbl">Período</span>
+        <button class="f-btn" data-atalho="hoje">Hoje</button>
+        <button class="f-btn" data-atalho="7">7 dias</button>
+        <button class="f-btn" data-atalho="30">30 dias</button>
+        <button class="f-btn" data-atalho="mes">Este mês</button>
+        <button class="f-btn" data-atalho="mespassado">Mês passado</button>
+        <button class="f-btn" data-atalho="tudo">Tudo</button>
+      </div>
+      <div class="f-grp">
+        <span class="f-lbl">Ou escolha</span>
+        <input type="date" class="f-date" id="fDe">
+        <span class="f-sep">até</span>
+        <input type="date" class="f-date" id="fAte">
+      </div>
+      <div class="f-info" id="fInfo"></div>
+    </div>
+
+    <!-- NUMEROS -->
+    <div class="kpis" id="kpis"></div>
+
+    <!-- EVOLUCAO -->
+    <div class="sec-t">Evolução no período</div>
+    <div class="card">
+      <div class="card-t">Investimento e resultados por dia</div>
+      <div class="card-s" id="evoSub"></div>
+      <div class="chart-box"><canvas id="chEvo"></canvas></div>
+    </div>
+
+    <!-- CAMPANHAS -->
+    <div class="sec-t">Campanhas</div>
+    <div class="card">
+      <div class="tbl-wrap">
+        <table id="tblCamp">
+          <thead><tr>
+            <th>Campanha</th><th>Status</th>
+            <th class="num">Investimento</th>
+            <th class="num" id="thCampRes">Resultados</th>
+            <th class="num">Custo/result.</th>
+          </tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+      <div class="aviso" id="avisoCamp"></div>
+    </div>
+
+    <!-- CRIATIVOS -->
+    <div class="sec-t">Anúncios</div>
+    <div class="card">
+      <div class="card-t">Desempenho por anúncio</div>
+      <div class="card-s">Ordenado por investimento. O link abre o anúncio como ele aparece para o público</div>
+      <div class="tbl-wrap">
+        <table id="tblCria">
+          <thead><tr>
+            <th>Anúncio</th><th>Status</th>
+            <th class="num">Investimento</th>
+            <th class="num" id="thCriaRes">Resultados</th>
+            <th class="num">Custo/result.</th>
+            <th class="num">Ver</th>
+          </tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+      <div class="aviso" id="avisoCria"></div>
+    </div>
+
+    <!-- PUBLICO -->
+    <div class="sec-t">Perfil demográfico</div>
+    <div class="card">
+      <div class="card-t">Resultados por idade e gênero</div>
+      <div class="card-s" id="pubSub"></div>
+      <div class="chart-box sm"><canvas id="chPub"></canvas></div>
+    </div>
+
+    <!-- NEGOCIO (planilha do cliente) -->
+    <div id="secNegocio" style="display:none;">
+      <div class="sec-t">Do anúncio até a venda</div>
+      <div class="kpis" id="kpisNegocio" style="margin-bottom:16px;"></div>
+
+      <div class="card" style="margin-bottom:16px;">
+        <div class="card-t">Funil do período</div>
+        <div class="card-s">Cada etapa e quanto dela passou para a seguinte</div>
+        <div id="funil"></div>
+      </div>
+
+      <div class="card">
+        <div class="card-t">Faturamento e investimento por dia</div>
+        <div class="card-s" id="fatSub"></div>
+        <div class="chart-box"><canvas id="chFat"></canvas></div>
+      </div>
+    </div>
+
+    <div class="foot">
+      <div>VÉRTICE ASSESSORIA · Dashboard de tráfego</div>
+      <div id="fAtual"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const PASTA='dados';
+let DADOS=null, INDICE=null, CHARTS={}, FILTRO={de:null,ate:null};
+
+/* ---------- helpers ---------- */
+const brl=v=>'R$ '+Number(v||0).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
+const brlCurto=v=>{const n=Number(v||0);return n>=1000?'R$ '+(n/1000).toFixed(1).replace('.',',')+'k':'R$ '+n.toFixed(0);};
+const num=v=>Number(v||0).toLocaleString('pt-BR');
+const el=id=>document.getElementById(id);
+const diaCurto=iso=>{const[,m,d]=iso.split('-');return `${d}/${m}`;};
+const hoje=()=>new Date().toISOString().slice(0,10);
+const addDias=(iso,n)=>{const d=new Date(iso+'T12:00:00');d.setDate(d.getDate()+n);return d.toISOString().slice(0,10);};
+
+/* rotulo do resultado — muda por cliente (conversas, leads, vendas...) */
+function rotulo(){
+  return DADOS.cliente?.rotulo_resultado
+    || (INDICE._objetivos_suportados||{})[DADOS.cliente?.objetivo]
+    || 'Resultados';
+}
+
+/* ---------- carga ---------- */
+function progresso(p,t){el('ldFill').style.width=p+'%';if(t)el('ldTxt').textContent=t;}
+function falhar(m){el('loader').classList.add('hidden');el('erro').classList.add('on');el('errMsg').innerHTML=m;}
+async function carregarJSON(c){
+  const r=await fetch(c+'?v='+Date.now());
+  if(!r.ok) throw new Error(`${c} (HTTP ${r.status})`);
+  return r.json();
+}
+
+/* ============================================================
+   PLANILHA DO CLIENTE (Google Sheets)
+   Lê pelo endpoint gviz, que serve planilha publicada como
+   "qualquer pessoa com o link". Sem token, sem backend.
+   ============================================================ */
+
+/* Aceita variacoes de nome de coluna — cada cliente escreve do seu jeito.
+   A primeira que casar vence. */
+const COLUNAS={
+  data:                   ['data','dia','date'],
+  leads_recebidos:        ['leads recebidos','leads','lead','leads recebidos no dia','contatos'],
+  contatos_atendidos:     ['contatos atendidos','atendidos','leads atendidos','respondidos'],
+  agendamentos:           ['agendamentos','agendados','agendamento','marcados'],
+  avaliacoes:             ['avaliacoes feitas','avaliacoes','avaliacao','consultas','comparecimentos'],
+  orcamentos_apresentados:['orcamentos apresentados','orcamentos','propostas','orcamento'],
+  orcamentos_fechados:    ['orcamentos fechados','fechados','vendas','venda','fechamentos'],
+  faturamento:            ['faturamento','valor','receita','valor fechado','valor vendido'],
+};
+
+/* tira acento e normaliza para casar cabecalho escrito de qualquer jeito */
+const normalizar=t=>String(t||'').trim().toLowerCase()
+  .normalize('NFD').replace(new RegExp('[\u0300-\u036f]','g'),'');
+
+/* '15/03/2026', '2026-03-15' ou Date do Sheets -> '2026-03-15' */
+function parseData(v,f){
+  if(v==null||v==='') return null;
+  // gviz manda Date(2026,2,15) — mes base zero
+  const m=String(v).match(/^Date\((\d+),(\d+),(\d+)/);
+  if(m) return `${m[1]}-${String(+m[2]+1).padStart(2,'0')}-${String(+m[3]).padStart(2,'0')}`;
+  const txt=String(f||v).trim();
+  const br=txt.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+  if(br) return `${br[3]}-${br[2].padStart(2,'0')}-${br[1].padStart(2,'0')}`;
+  const iso=txt.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if(iso) return iso[0];
+  return null;
+}
+
+/* 'R$ 3.400,00' / '3400' / 3400 -> 3400 */
+function parseNumero(v,f){
+  if(v==null||v==='') return 0;
+  if(typeof v==='number') return v;
+  let t=String(f||v).replace(/[R$\s]/g,'');
+  if(t.includes(',')) t=t.replace(/\./g,'').replace(',','.');  // formato br
+  const n=parseFloat(t);
+  return isNaN(n)?0:n;
+}
+
+async function lerPlanilha(cfg){
+  const gid=cfg.gid_funil||'0';
+  const url=`https://docs.google.com/spreadsheets/d/${cfg.sheet_id}/gviz/tq?tqx=out:json&gid=${gid}`;
+  const r=await fetch(url);
+  if(!r.ok) throw new Error('planilha não acessível (HTTP '+r.status+')');
+  const txt=await r.text();
+  const json=JSON.parse(txt.replace(/^[^(]+\(/,'').replace(/\);?\s*$/,''));
+
+  const cols=(json.table?.cols||[]).map(c=>normalizar(c.label));
+  // mapeia campo -> indice da coluna
+  const idx={};
+  for(const [campo,nomes] of Object.entries(COLUNAS)){
+    const alvos=nomes.map(normalizar);
+    const i=cols.findIndex(c=>c&&alvos.includes(c));
+    if(i>=0) idx[campo]=i;
+  }
+  if(idx.data==null) throw new Error('a planilha precisa de uma coluna "Data"');
+
+  const linhas=[];
+  for(const row of (json.table?.rows||[])){
+    const c=row.c||[];
+    const data=parseData(c[idx.data]?.v,c[idx.data]?.f);
+    if(!data) continue;                    // pula linha sem data (rodape, vazio)
+    const o={data};
+    for(const campo of Object.keys(COLUNAS)){
+      if(campo==='data'||idx[campo]==null) continue;
+      o[campo]=parseNumero(c[idx[campo]]?.v,c[idx[campo]]?.f);
+    }
+    linhas.push(o);
+  }
+  linhas.sort((a,b)=>a.data.localeCompare(b.data));
+  if(!linhas.length) throw new Error('planilha sem linhas com data válida');
+  return linhas;
+}
+
+async function iniciar(){
+  try{
+    progresso(20,'LENDO CLIENTES');
+    INDICE=await carregarJSON(`${PASTA}/clientes.json`);
+    const ativos=(INDICE.clientes||[]).filter(c=>c.ativo!==false);
+    if(!ativos.length) return falhar('Nenhum cliente ativo em <b>dados/clientes.json</b>.');
+
+    const url=new URLSearchParams(location.search);
+    const cli=ativos.find(c=>c.slug===url.get('cliente'))||ativos[0];
+
+    progresso(55,'CARREGANDO DADOS');
+    DADOS=await carregarJSON(`${PASTA}/${cli.slug}.json`);
+    DADOS._cfg=cli;
+
+    // planilha do cliente (opcional). Se falhar, o painel segue com os dados
+    // do gerenciador — nunca deixa a tela em branco por causa dela.
+    if(cli.planilha?.sheet_id){
+      progresso(72,'LENDO PLANILHA');
+      try{
+        DADOS.funil=await lerPlanilha(cli.planilha);
+      }catch(e){
+        console.warn('planilha não carregada:',e.message);
+        DADOS._erroPlanilha=e.message;
+      }
+    }
+
+    progresso(85,'MONTANDO PAINEL');
+    montarSeletor(ativos,cli.slug);
+    montarCabecalho();
+    prepararFiltro();
+    aplicar('30');           // abre nos ultimos 30 dias com dados
+
+    progresso(100,'PRONTO');
+    setTimeout(()=>{el('loader').classList.add('hidden');el('dash').classList.add('on');},260);
+  }catch(e){
+    falhar(`${e.message}<br><br>Confira se o arquivo existe na pasta <b>dados/</b> e se a página está sendo aberta por um servidor (não por duplo clique no arquivo).`);
+  }
+}
+
+function montarSeletor(ativos,atual){
+  const s=el('selCliente');
+  s.innerHTML=ativos.map(c=>`<option value="${c.slug}" ${c.slug===atual?'selected':''}>${c.nome}</option>`).join('');
+  s.style.display=ativos.length>1?'':'none';
+}
+function trocarCliente(slug){location.search='?cliente='+slug;}
+
+function montarCabecalho(){
+  const d=DADOS,cfg=d._cfg;
+  el('hClient').textContent=d.cliente?.nome||cfg.nome;
+  el('hSeg').textContent=d.cliente?.segmento||cfg.segmento||'';
+  document.title=`${d.cliente?.nome||cfg.nome} — Dashboard Vértice`;
+  const at=d.periodo_disponivel?.atualizado_em;
+  if(at) el('fAtual').textContent='Atualizado em '+new Date(at)
+    .toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});
+  const r=rotulo();
+  el('thCampRes').textContent=r; el('thCriaRes').textContent=r;
+}
+
+/* ---------- filtro ---------- */
+function prepararFiltro(){
+  const s=DADOS.serie_diaria||[];
+  if(!s.length) return;
+  const min=s[0].data, max=s[s.length-1].data;
+  for(const id of ['fDe','fAte']){
+    el(id).min=min; el(id).max=max;
+    el(id).addEventListener('change',()=>{
+      FILTRO={de:el('fDe').value,ate:el('fAte').value};
+      document.querySelectorAll('.f-btn').forEach(b=>b.classList.remove('on'));
+      render();
+    });
+  }
+  document.querySelectorAll('.f-btn').forEach(b=>{
+    b.addEventListener('click',()=>aplicar(b.dataset.atalho));
+  });
+}
+
+/* atalhos ancorados no ultimo dia COM DADOS (nao em hoje),
+   senao "7 dias" viria vazio sempre que a carga estivesse atrasada */
+function aplicar(atalho){
+  const s=DADOS.serie_diaria||[];
+  if(!s.length) return;
+  const ultimo=s[s.length-1].data, primeiro=s[0].data;
+  let de,ate;
+
+  if(atalho==='tudo'){ de=primeiro; ate=ultimo; }
+  else if(atalho==='hoje'){ de=ultimo; ate=ultimo; }
+  else if(atalho==='mes'){ de=ultimo.slice(0,7)+'-01'; ate=ultimo; }
+  else if(atalho==='mespassado'){
+    const [a,m]=ultimo.split('-').map(Number);
+    const am=m===1?a-1:a, mm=m===1?12:m-1;
+    de=`${am}-${String(mm).padStart(2,'0')}-01`;
+    ate=`${am}-${String(mm).padStart(2,'0')}-${new Date(am,mm,0).getDate()}`;
+  }else{
+    ate=ultimo; de=addDias(ultimo,-(Number(atalho)-1));
+    if(de<primeiro) de=primeiro;
+  }
+
+  FILTRO={de,ate};
+  el('fDe').value=de; el('fAte').value=ate;
+  document.querySelectorAll('.f-btn').forEach(b=>b.classList.toggle('on',b.dataset.atalho===atalho));
+  render();
+}
+
+/* linhas do periodo escolhido */
+function serieFiltrada(){
+  const s=DADOS.serie_diaria||[];
+  if(!FILTRO.de||!FILTRO.ate) return s;
+  // se o usuario inverter as datas, ordena em vez de devolver vazio
+  const [de,ate]=FILTRO.de<=FILTRO.ate?[FILTRO.de,FILTRO.ate]:[FILTRO.ate,FILTRO.de];
+  return s.filter(x=>x.data>=de&&x.data<=ate);
+}
+
+/* proporcao do periodo filtrado sobre o total — usada para estimar
+   campanhas/anuncios, que a API entrega agregados no periodo inteiro */
+function fatiaPeriodo(){
+  const tot=(DADOS.serie_diaria||[]).reduce((a,x)=>a+x.investimento,0);
+  const fil=serieFiltrada().reduce((a,x)=>a+x.investimento,0);
+  return tot?fil/tot:1;
+}
+function periodoInteiro(){
+  const s=DADOS.serie_diaria||[];
+  return !s.length || (FILTRO.de<=s[0].data && FILTRO.ate>=s[s.length-1].data);
+}
+
+/* As metas sao mensais. So faz sentido comparar quando o filtro cobre
+   exatamente um mes calendario — senao "219% do previsto" em 2 meses engana. */
+function filtroEhUmMes(){
+  if(!FILTRO.de||!FILTRO.ate) return false;
+  const [a1,m1,d1]=FILTRO.de.split('-').map(Number);
+  const [a2,m2,d2]=FILTRO.ate.split('-').map(Number);
+  if(a1!==a2||m1!==m2||d1!==1) return false;
+  // vai ate o fim do mes, ou ate o ultimo dia com dados (mes corrente)
+  const s=DADOS.serie_diaria||[];
+  const ultimo=s.length?s[s.length-1].data:null;
+  return d2===new Date(a1,m1,0).getDate() || FILTRO.ate===ultimo;
+}
+
+/* ---------- render ---------- */
+function render(){
+  const s=serieFiltrada();
+  // um dia só: mostra a data em vez de "1 dia", e avisa se não for hoje de fato
+  // (a carga pode estar atrasada — melhor dizer qual dia é do que fingir que é hoje)
+  let info;
+  if(!s.length) info='Nenhum dia no período';
+  else if(s.length===1){
+    const d=s[0].data;
+    info=d===hoje()?'Hoje · '+diaCurto(d):diaCurto(d)+' · último dia com dados';
+  }else info=`${s.length} dias no período`;
+  el('fInfo').textContent=info;
+  renderKPIs(s); renderEvolucao(s);
+  renderCampanhas(); renderCriativos(); renderPublico(); renderNegocio();
+}
+
+function renderKPIs(s){
+  const inv=s.reduce((a,x)=>a+x.investimento,0);
+  const res=s.reduce((a,x)=>a+x.resultados,0);
+  const imp=s.reduce((a,x)=>a+x.impressoes,0);
+  const alcSoma=s.reduce((a,x)=>a+(x.alcance||0),0);
+  const m=DADOS.metas||{};
+  const inteiro=periodoInteiro();
+  const mensal=filtroEhUmMes();   // metas so aparecem em recorte de 1 mes
+  // alcance real (deduplicado) so vale para o periodo inteiro
+  const alc=inteiro&&DADOS.alcance_periodo?DADOS.alcance_periodo:alcSoma;
+  const cards=[];
+
+  let bInv='';
+  if(m.investimento_previsto&&mensal){
+    const p=(inv/m.investimento_previsto)*100, estourou=p>100;
+    bInv=`<div class="meta-bar">
+      <div class="meta-track"><div class="meta-fill" style="width:${Math.min(100,p)}%;background:${estourou?'var(--yellow)':'linear-gradient(90deg,var(--purple),var(--lilac))'}"></div></div>
+      <div class="meta-txt"${estourou?' style="color:var(--yellow)"':''}>${p.toFixed(0)}% do previsto (${brl(m.investimento_previsto)})</div></div>`;
+  }
+  cards.push(`<div class="kpi"><div class="kpi-l">Investimento</div>
+    <div class="kpi-v">${brl(inv)}</div>
+    <div class="kpi-f">${s.length?brl(inv/s.length)+' por dia':'—'}</div>${bInv}</div>`);
+
+  let bRes='';
+  if(m.resultados_alvo&&mensal){
+    const p=(res/m.resultados_alvo)*100, bateu=p>=100;
+    bRes=`<div class="meta-bar">
+      <div class="meta-track"><div class="meta-fill" style="width:${Math.min(100,p)}%;background:${bateu?'var(--green)':'linear-gradient(90deg,var(--purple),var(--lilac))'}"></div></div>
+      <div class="meta-txt"${bateu?' style="color:var(--green)"':''}>${p.toFixed(0)}% da meta (${num(m.resultados_alvo)})</div></div>`;
+  }
+  cards.push(`<div class="kpi hero"><div class="kpi-l">${rotulo()}</div>
+    <div class="kpi-v">${num(res)}</div>
+    <div class="kpi-f">${s.length?(res/s.length).toFixed(1).replace('.',',')+' por dia':'—'}</div>${bRes}</div>`);
+
+  cards.push(`<div class="kpi"><div class="kpi-l">Custo por resultado</div>
+    <div class="kpi-v">${res?brl(inv/res):'—'}</div>
+    <div class="kpi-f">${m.custo_por_resultado_alvo?'alvo: '+brl(m.custo_por_resultado_alvo):''}</div></div>`);
+
+  cards.push(`<div class="kpi"><div class="kpi-l">Pessoas alcançadas</div>
+    <div class="kpi-v">${num(alc)}</div>
+    <div class="kpi-f">${num(imp)} exibições${!inteiro?' · soma diária':''}</div></div>`);
+
+  el('kpis').innerHTML=cards.join('');
+}
+
+function renderEvolucao(s){
+  el('evoSub').textContent=s.length
+    ? `De ${diaCurto(s[0].data)} a ${diaCurto(s[s.length-1].data)}`:'Sem dados no período';
+  CHARTS.evo?.destroy();
+  if(!s.length) return;
+
+  // com poucos dias a barra estica e fica horrivel; e com 1 dia so a linha
+  // nao desenha nada (ponto solto), por isso o ponto vira visivel.
+  const poucos=s.length<=3;
+
+  CHARTS.evo=new Chart(el('chEvo'),{
+    data:{labels:s.map(x=>diaCurto(x.data)),datasets:[
+      {type:'bar',label:'Investimento',data:s.map(x=>x.investimento),
+       backgroundColor:'rgba(107,33,232,0.45)',borderColor:'rgba(168,85,247,0.7)',
+       borderWidth:1,borderRadius:3,yAxisID:'y',order:2,
+       ...(poucos?{barThickness:56}:{maxBarThickness:44})},
+      {type:'line',label:rotulo(),data:s.map(x=>x.resultados),
+       borderColor:'#4ade80',backgroundColor:'rgba(74,222,128,0.08)',
+       borderWidth:2,pointRadius:poucos?5:0,pointHoverRadius:5,
+       pointBackgroundColor:'#4ade80',pointBorderColor:'rgba(11,9,32,0.9)',pointBorderWidth:2,
+       tension:.35,fill:!poucos,yAxisID:'y1',order:1},
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,
+      interaction:{mode:'index',intersect:false},
+      plugins:{
+        legend:{labels:{color:'rgba(255,255,255,0.55)',font:{family:'Montserrat',size:11,weight:'600'},
+          usePointStyle:true,pointStyle:'circle',padding:16}},
+        tooltip:{backgroundColor:'rgba(11,9,32,0.96)',borderColor:'rgba(168,85,247,0.3)',borderWidth:1,
+          titleFont:{family:'Montserrat',size:12,weight:'700'},bodyFont:{family:'Montserrat',size:12},
+          padding:12,cornerRadius:8,
+          callbacks:{label:c=>c.datasetIndex===0
+            ?'  Investimento: '+brl(c.parsed.y):'  '+rotulo()+': '+num(c.parsed.y)}}},
+      scales:{
+        x:{grid:{display:false},ticks:{color:'rgba(255,255,255,0.30)',font:{family:'Montserrat',size:9},
+          maxRotation:0,autoSkip:true,maxTicksLimit:14}},
+        y:{position:'left',beginAtZero:true,grid:{color:'rgba(255,255,255,0.04)'},
+          ticks:{color:'rgba(255,255,255,0.30)',font:{family:'Montserrat',size:10},callback:v=>brlCurto(v)}},
+        y1:{position:'right',beginAtZero:true,grid:{display:false},
+          ticks:{color:'rgba(74,222,128,0.55)',font:{family:'Montserrat',size:10},precision:0}},
+      }}
+  });
+}
+
+/* Campanhas e anuncios: a API entrega agregado do periodo inteiro.
+   Quando o usuario filtra um sub-periodo, os valores sao rateados pela
+   participacao do investimento — por isso o aviso explicito abaixo da tabela. */
+function renderCampanhas(){
+  const c=DADOS.campanhas||[], tb=el('tblCamp').querySelector('tbody');
+  if(!c.length){
+    tb.innerHTML=`<tr><td colspan="5"><div class="vazio">Nenhuma campanha no período.</div></td></tr>`;
+    el('avisoCamp').textContent=''; return;
+  }
+  const f=periodoInteiro()?1:fatiaPeriodo();
+  tb.innerHTML=[...c].sort((a,b)=>b.investimento-a.investimento).map(x=>{
+    const inv=x.investimento*f, res=Math.round(x.resultados*f);
+    return `<tr>
+      <td class="nome">${x.nome}</td>
+      <td><span class="pill ${x.status==='ACTIVE'?'on':'off'}">${x.status==='ACTIVE'?'ATIVA':'PAUSADA'}</span></td>
+      <td class="num">${brl(inv)}</td><td class="num">${num(res)}</td>
+      <td class="num">${res?brl(inv/res):'—'}</td></tr>`;
+  }).join('');
+  el('avisoCamp').textContent=periodoInteiro()?''
+    :'Valores por campanha estimados para o período filtrado, rateados pela participação no investimento. Os totais no topo da página são exatos.';
+}
+
+function renderCriativos(){
+  const cr=DADOS.criativos||[], tb=el('tblCria').querySelector('tbody');
+  if(!cr.length){
+    tb.innerHTML=`<tr><td colspan="6"><div class="vazio">Nenhum anúncio no período.</div></td></tr>`;
+    el('avisoCria').textContent=''; return;
+  }
+  const f=periodoInteiro()?1:fatiaPeriodo();
+  tb.innerHTML=[...cr].sort((a,b)=>b.investimento-a.investimento).map(x=>{
+    const inv=x.investimento*f, res=Math.round(x.resultados*f);
+    const thumb=x.thumb
+      ?`<img class="thumb" src="${x.thumb}" alt="" loading="lazy" onerror="this.style.visibility='hidden'">`
+      :`<span class="thumb"></span>`;
+    return `<tr>
+      <td><div class="cria-cell">${thumb}<span class="nome">${x.nome}</span></div></td>
+      <td><span class="pill ${x.status==='ACTIVE'?'on':'off'}">${x.status==='ACTIVE'?'ATIVO':'PAUSADO'}</span></td>
+      <td class="num">${brl(inv)}</td><td class="num">${num(res)}</td>
+      <td class="num">${res?brl(inv/res):'—'}</td>
+      <td class="num">${x.link?`<a class="lnk" href="${x.link}" target="_blank" rel="noopener">abrir ↗</a>`:'—'}</td>
+    </tr>`;
+  }).join('');
+  el('avisoCria').textContent=periodoInteiro()?''
+    :'Valores por anúncio estimados para o período filtrado, rateados pela participação no investimento. Os totais no topo da página são exatos.';
+}
+
+function renderPublico(){
+  const p=DADOS.publico?.idade_genero||[];
+  el('pubSub').textContent=p.length
+    ?'Dados do período completo da conta — não muda com o filtro de datas acima':'Sem dados demográficos';
+  CHARTS.pub?.destroy();
+  if(!p.length) return;
+  const faixas=[...new Set(p.map(x=>x.faixa))].sort();
+  const serie=g=>faixas.map(f=>{const i=p.find(x=>x.faixa===f&&x.genero===g);return i?i.resultados:0;});
+
+  CHARTS.pub=new Chart(el('chPub'),{
+    type:'bar',
+    data:{labels:faixas,datasets:[
+      {label:'Mulheres',data:serie('female'),backgroundColor:'rgba(168,85,247,0.75)',borderRadius:4},
+      {label:'Homens',data:serie('male'),backgroundColor:'rgba(56,189,248,0.65)',borderRadius:4}]},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{
+        legend:{labels:{color:'rgba(255,255,255,0.55)',font:{family:'Montserrat',size:11,weight:'600'},
+          usePointStyle:true,pointStyle:'circle',padding:16}},
+        tooltip:{backgroundColor:'rgba(11,9,32,0.96)',borderColor:'rgba(168,85,247,0.3)',borderWidth:1,
+          titleFont:{family:'Montserrat',size:12,weight:'700'},bodyFont:{family:'Montserrat',size:12},
+          padding:12,cornerRadius:8,
+          callbacks:{label:c=>{
+            const it=p.find(x=>x.faixa===faixas[c.dataIndex]&&x.genero===(c.datasetIndex===0?'female':'male'));
+            return `  ${num(c.parsed.y)} ${rotulo().toLowerCase()}${it?' · '+brl(it.investimento):''}`;}}}},
+      scales:{
+        x:{grid:{display:false},ticks:{color:'rgba(255,255,255,0.40)',font:{family:'Montserrat',size:11,weight:'600'}}},
+        y:{beginAtZero:true,grid:{color:'rgba(255,255,255,0.04)'},
+          ticks:{color:'rgba(255,255,255,0.30)',font:{family:'Montserrat',size:10},precision:0}}}}
+  });
+}
+
+/* ============================================================
+   NEGOCIO — dados da planilha do cliente cruzados com o trafego
+   ============================================================ */
+
+/* etapas do funil, na ordem. 'chave' e o campo no JSON;
+   etapa sem nenhum numero preenchido some do painel. */
+const ETAPAS=[
+  {chave:'leads_recebidos',        nome:'Leads recebidos',   sub:'chegaram de fato'},
+  {chave:'contatos_atendidos',     nome:'Atendidos',         sub:'foram respondidos'},
+  {chave:'agendamentos',           nome:'Agendamentos',      sub:'marcaram horário'},
+  {chave:'avaliacoes',             nome:'Avaliações',        sub:'compareceram'},
+  {chave:'orcamentos_apresentados',nome:'Orçamentos',        sub:'receberam proposta'},
+  {chave:'orcamentos_fechados',    nome:'Fechados',          sub:'viraram venda'},
+];
+
+function funilFiltrado(){
+  const f=DADOS.funil||[];
+  if(!FILTRO.de||!FILTRO.ate) return f;
+  const [de,ate]=FILTRO.de<=FILTRO.ate?[FILTRO.de,FILTRO.ate]:[FILTRO.ate,FILTRO.de];
+  return f.filter(x=>x.data>=de&&x.data<=ate);
+}
+
+function renderNegocio(){
+  const f=funilFiltrado();
+  if(!f.length) return;                 // sem planilha conectada, secao nao aparece
+  el('secNegocio').style.display='';
+
+  const s=serieFiltrada();
+  const inv=s.reduce((a,x)=>a+x.investimento,0);
+  const res=s.reduce((a,x)=>a+x.resultados,0);
+  const soma=k=>f.reduce((a,x)=>a+(Number(x[k])||0),0);
+  const fat=soma('faturamento');
+
+  // etapas com algum numero — cliente que nao usa "avaliacoes" nao ve a linha
+  const etapas=ETAPAS.map(e=>({...e,valor:soma(e.chave)})).filter(e=>e.valor>0);
+  const leads=soma('leads_recebidos');
+  const fechados=soma('orcamentos_fechados');
+
+  /* --- indicadores que so existem cruzando as duas fontes --- */
+  const item=(l,v,sub)=>`<div class="kpi">
+    <div class="kpi-l">${l}</div><div class="kpi-v" style="font-size:27px;">${v}</div>
+    ${sub?`<div class="kpi-f">${sub}</div>`:''}</div>`;
+
+  const cards=[];
+  if(fat) cards.push(item('Faturamento',brl(fat),
+    fechados?brl(fat/fechados)+' de ticket médio':''));
+  if(fat&&inv) cards.push(item('Retorno sobre o investimento',
+    (fat/inv).toFixed(2).replace('.',',')+'x',
+    `${brl(inv)} investidos`));
+  if(leads&&inv) cards.push(item('Custo por lead real',brl(inv/leads),
+    res?`gerenciador marcou ${num(res)}`:''));
+  if(fechados&&inv) cards.push(item('Custo por venda',brl(inv/fechados),
+    `${num(fechados)} ${fechados===1?'venda':'vendas'}`));
+  el('kpisNegocio').innerHTML=cards.join('');
+
+  /* --- funil: largura proporcional ao topo, taxa vs etapa anterior --- */
+  const topo=etapas.length?etapas[0].valor:0;
+  const cores=['#A855F7','#9333EA','#7C3AED','#6B21E8','#5B21B6','#4C1D95'];
+  el('funil').innerHTML=etapas.map((e,i)=>{
+    const larg=topo?Math.max(6,(e.valor/topo)*100):0;
+    const ant=i>0?etapas[i-1].valor:null;
+    const taxa=ant?((e.valor/ant)*100):null;
+    return `<div class="fn-linha">
+      <div class="fn-nome">${e.nome}<small>${e.sub}</small></div>
+      <div class="fn-track">
+        <div class="fn-fill" style="width:${larg}%;background:${cores[i%cores.length]}">${num(e.valor)}</div>
+      </div>
+      <div class="fn-taxa">${taxa!==null?`<b>${taxa.toFixed(0)}%</b> da anterior`:''}</div>
+    </div>`;
+  }).join('');
+
+  renderFaturamento(f,s);
+}
+
+function renderFaturamento(f,s){
+  el('fatSub').textContent=f.length
+    ?`De ${diaCurto(f[0].data)} a ${diaCurto(f[f.length-1].data)} — escalas diferentes: faturamento à esquerda, investimento à direita`:'';
+  CHARTS.fat?.destroy();
+  if(!f.length) return;
+  const poucos=f.length<=3;
+  // investimento vem da serie de trafego, casado por data
+  const invPorDia=Object.fromEntries(s.map(x=>[x.data,x.investimento]));
+
+  CHARTS.fat=new Chart(el('chFat'),{
+    data:{labels:f.map(x=>diaCurto(x.data)),datasets:[
+      {type:'bar',label:'Faturamento',data:f.map(x=>x.faturamento||0),
+       backgroundColor:'rgba(74,222,128,0.35)',borderColor:'rgba(74,222,128,0.7)',
+       borderWidth:1,borderRadius:3,yAxisID:'y',order:2,
+       ...(poucos?{barThickness:56}:{maxBarThickness:44})},
+      {type:'line',label:'Investimento',data:f.map(x=>invPorDia[x.data]||0),
+       borderColor:'#A855F7',backgroundColor:'rgba(168,85,247,0.06)',
+       borderWidth:2,pointRadius:poucos?5:0,pointHoverRadius:5,
+       pointBackgroundColor:'#A855F7',pointBorderColor:'rgba(11,9,32,0.9)',pointBorderWidth:2,
+       tension:.35,fill:!poucos,yAxisID:'y1',order:1},
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,
+      interaction:{mode:'index',intersect:false},
+      plugins:{
+        legend:{labels:{color:'rgba(255,255,255,0.55)',font:{family:'Montserrat',size:11,weight:'600'},
+          usePointStyle:true,pointStyle:'circle',padding:16}},
+        tooltip:{backgroundColor:'rgba(11,9,32,0.96)',borderColor:'rgba(168,85,247,0.3)',borderWidth:1,
+          titleFont:{family:'Montserrat',size:12,weight:'700'},bodyFont:{family:'Montserrat',size:12},
+          padding:12,cornerRadius:8,
+          callbacks:{label:c=>'  '+c.dataset.label+': '+brl(c.parsed.y)}}},
+      scales:{
+        x:{grid:{display:false},ticks:{color:'rgba(255,255,255,0.30)',font:{family:'Montserrat',size:9},
+          maxRotation:0,autoSkip:true,maxTicksLimit:14}},
+        // eixos separados: o faturamento costuma ser uma ordem de grandeza maior
+        // que o investimento; no mesmo eixo a linha roxa fica colada no zero.
+        y:{position:'left',beginAtZero:true,grid:{color:'rgba(255,255,255,0.04)'},
+          ticks:{color:'rgba(74,222,128,0.55)',font:{family:'Montserrat',size:10},callback:v=>brlCurto(v)}},
+        y1:{position:'right',beginAtZero:true,grid:{display:false},
+          ticks:{color:'rgba(168,85,247,0.6)',font:{family:'Montserrat',size:10},callback:v=>brlCurto(v)}}}}
+  });
+}
+
+iniciar();
+</script>
+</body>
+</html>

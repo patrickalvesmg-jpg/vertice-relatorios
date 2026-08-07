@@ -22,9 +22,22 @@ const crypto = require('crypto');
 
 const RAIZ = path.join(__dirname, '..');
 const ORIGEM = path.join(RAIZ, '..', 'vertice', 'dashboards', 'trafego');
-const DADOS = path.join(ORIGEM, 'dados');
 const SAIDA = path.join(RAIZ, 'docs');           // GitHub Pages serve /docs
 const CONFIG = path.join(RAIZ, 'senha.txt');     // fora do Git
+
+// O dashboard.html e os dados moram no projeto vertice/. Na automacao
+// (GitHub Actions) esse projeto nao existe, entao ha uma copia em
+// scripts/. A copia local sempre perde para o original: assim nao
+// existem duas versoes do painel divergindo sem ninguem perceber.
+function origemDe(relativo, alternativa) {
+  const oficial = path.join(ORIGEM, relativo);
+  if (fs.existsSync(oficial)) return oficial;
+  return path.join(__dirname, alternativa);
+}
+
+const DADOS = fs.existsSync(path.join(ORIGEM, 'dados'))
+  ? path.join(ORIGEM, 'dados')
+  : path.join(__dirname, 'dados');
 
 // ---------------------------------------------------------------
 // Senha
@@ -275,11 +288,12 @@ body{background:#0B0920;color:#fff;font-family:Montserrat,system-ui,sans-serif;
 function main() {
   const senha = lerSenha();
 
-  const arquivoDash = path.join(ORIGEM, 'dashboard.html');
+  const arquivoDash = origemDe('dashboard.html', 'dashboard.html');
   if (!fs.existsSync(arquivoDash)) {
     console.error(`\nNao encontrei o dashboard em:\n  ${arquivoDash}\n`);
     process.exit(1);
   }
+  console.log(`  painel: ${arquivoDash.includes('vertice' + path.sep + 'dashboards') ? 'original' : 'copia (automacao)'}`);
 
   const base = prepararBase(fs.readFileSync(arquivoDash, 'utf8'));
 
