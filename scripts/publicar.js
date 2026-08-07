@@ -310,10 +310,13 @@ function main() {
 
   const publicados = [];
 
+  const faltando = [];
+
   for (const c of ativos) {
     const arq = path.join(DADOS, `${c.slug}.json`);
     if (!fs.existsSync(arq)) {
       console.log(`  aviso: ${c.slug}.json nao encontrado, cliente ignorado`);
+      faltando.push(c.slug);
       continue;
     }
 
@@ -337,6 +340,16 @@ function main() {
     const ate = dados.periodo_disponivel?.ate || '?';
     console.log(`  ${c.slug}/  ${c.nome} (${kb} KB, dados ate ${ate})`);
     publicados.push(c);
+  }
+
+  // Nenhum cliente gerado = site vazio. Melhor parar e deixar no ar o que
+  // ja estava publicado do que substituir por uma pagina sem nada. Acontece
+  // quando a Meta recusa a chamada e os dados nao chegaram a ser gravados.
+  if (!publicados.length) {
+    console.error('\nNenhum relatorio pode ser gerado — dados ausentes para: ' +
+      faltando.join(', '));
+    console.error('O site publicado NAO foi alterado.\n');
+    process.exit(1);
   }
 
   fs.writeFileSync(path.join(SAIDA, 'index.html'), paginaIndice(publicados), 'utf8');

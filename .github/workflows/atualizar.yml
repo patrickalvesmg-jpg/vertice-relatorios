@@ -27,7 +27,13 @@ jobs:
         with:
           node-version: '20'
 
+      # A Meta pode recusar a chamada (bloqueio temporario do app, limite de
+      # requisicoes, instabilidade). Nesse caso a rodada nao falha: o site
+      # segue publicado com os ultimos dados bons, e a proxima hora tenta de
+      # novo. Falhar aqui so geraria alarme de hora em hora sem resolver nada.
       - name: Puxar dados da Meta
+        id: puxar
+        continue-on-error: true
         env:
           META_ACCESS_TOKEN: ${{ secrets.META_ACCESS_TOKEN }}
           META_APP_ID: ${{ secrets.META_APP_ID }}
@@ -35,6 +41,11 @@ jobs:
           META_BUSINESS_ID: ${{ secrets.META_BUSINESS_ID }}
           META_API_VERSION: v21.0
         run: node scripts/meta/gerar-dados-dashboard.js cfc-academy
+
+      - name: Avisar se a Meta recusou
+        if: steps.puxar.outcome == 'failure'
+        run: |
+          echo "::warning::A Meta recusou a chamada nesta rodada. O site segue com os últimos dados bons; a próxima execução tentará de novo."
 
       - name: Gerar as páginas protegidas
         env:
