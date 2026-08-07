@@ -29,9 +29,17 @@ no ar com os números novos.
 Fica em `senha.txt`, na raiz — **fora do Git**. Sem esse arquivo o
 `publicar.js` não roda.
 
-Se precisar trocar: edite `senha.txt`, rode `publicar.js` de novo e dê
-push. A senha antiga para de funcionar na hora, porque os dados são
-recriptografados.
+Para trocar:
+
+```bash
+echo "nova-senha" > senha.txt
+node scripts/publicar.js
+git add docs/ && git commit -m "troca senha" && git push
+```
+
+A senha antiga para de funcionar assim que o deploy sai: a chave é
+derivada dela, então os dados cifrados mudam junto. Não existe "senha
+antiga ainda válida" — quem tinha o link precisa da nova.
 
 É a mesma senha para todos os clientes. Isso significa que um cliente com
 a senha consegue abrir o relatório de outro trocando o seletor no topo do
