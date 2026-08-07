@@ -1,0 +1,16 @@
+# ============================================================
+# A SENHA NUNCA VAI PARA O GITHUB
+# Ela e o que protege os dados dos clientes no site publicado.
+# ============================================================
+senha.txt
+
+# Dados brutos dos clientes (ficam em vertice/dashboards/trafego/dados/).
+# No site eles entram criptografados dentro do docs/index.html.
+dados/
+*.json
+!package.json
+
+node_modules/
+*.log
+.DS_Store
+Thumbs.db
