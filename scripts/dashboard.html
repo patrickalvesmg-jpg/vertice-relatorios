@@ -112,9 +112,6 @@ tbody tr:hover{background:rgba(168,85,247,0.03);}
   font-size:11px;font-weight:700;padding:5px 10px;border:1px solid var(--border2);
   border-radius:7px;transition:all .15s;white-space:nowrap;}
 .lnk:hover{background:rgba(168,85,247,0.10);color:#fff;}
-.thumb{width:38px;height:38px;border-radius:7px;object-fit:cover;background:rgba(255,255,255,0.05);
-  border:1px solid var(--border);flex-shrink:0;}
-.cria-cell{display:flex;align-items:center;gap:11px;}
 
 .aviso{font-size:10.5px;color:var(--text);font-weight:600;margin-top:14px;line-height:1.6;
   padding-left:11px;border-left:2px solid var(--border2);}
@@ -207,12 +204,16 @@ tbody tr:hover{background:rgba(168,85,247,0.03);}
     </div>
 
     <!-- CAMPANHAS -->
+    <!-- Sem coluna de status: o investimento e do periodo filtrado, mas o
+         status seria o de agora. Uma campanha que rodou em junho e foi
+         pausada em julho apareceria como "pausada" ao lado de um gasto,
+         dando a impressao de que gasta pausada. -->
     <div class="sec-t">Campanhas</div>
     <div class="card">
       <div class="tbl-wrap">
         <table id="tblCamp">
           <thead><tr>
-            <th>Campanha</th><th>Status</th>
+            <th>Campanha</th>
             <th class="num">Investimento</th>
             <th class="num" id="thCampRes">Resultados</th>
             <th class="num">Custo/result.</th>
@@ -221,26 +222,6 @@ tbody tr:hover{background:rgba(168,85,247,0.03);}
         </table>
       </div>
       <div class="aviso" id="avisoCamp"></div>
-    </div>
-
-    <!-- CRIATIVOS -->
-    <div class="sec-t">Anúncios</div>
-    <div class="card">
-      <div class="card-t">Desempenho por anúncio</div>
-      <div class="card-s">Ordenado por investimento. O link abre o anúncio como ele aparece para o público</div>
-      <div class="tbl-wrap">
-        <table id="tblCria">
-          <thead><tr>
-            <th>Anúncio</th><th>Status</th>
-            <th class="num">Investimento</th>
-            <th class="num" id="thCriaRes">Resultados</th>
-            <th class="num">Custo/result.</th>
-            <th class="num">Ver</th>
-          </tr></thead>
-          <tbody></tbody>
-        </table>
-      </div>
-      <div class="aviso" id="avisoCria"></div>
     </div>
 
     <!-- PUBLICO -->
@@ -442,7 +423,7 @@ function montarCabecalho(){
   if(at) el('fAtual').textContent='Atualizado em '+new Date(at)
     .toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});
   const r=rotulo();
-  el('thCampRes').textContent=r; el('thCriaRes').textContent=r;
+  el('thCampRes').textContent=r;
 }
 
 /* ---------- filtro ---------- */
@@ -537,7 +518,7 @@ function render(){
   }else info=`${s.length} dias no período`;
   el('fInfo').textContent=info;
   renderKPIs(s); renderEvolucao(s);
-  renderCampanhas(); renderCriativos(); renderPublico(); renderNegocio();
+  renderCampanhas(); renderPublico(); renderNegocio();
 }
 
 function renderKPIs(s){
@@ -633,45 +614,26 @@ function renderEvolucao(s){
    participacao do investimento — por isso o aviso explicito abaixo da tabela. */
 function renderCampanhas(){
   const c=DADOS.campanhas||[], tb=el('tblCamp').querySelector('tbody');
-  if(!c.length){
-    tb.innerHTML=`<tr><td colspan="5"><div class="vazio">Nenhuma campanha no período.</div></td></tr>`;
+
+  /* Campanha sem investimento no periodo nao entra: ela nao aconteceu
+     aqui. Antes apareciam campanhas antigas com valor residual, o que
+     dava a impressao de gasto atual em campanha ja pausada. */
+  const comGasto=c.filter(x=>x.investimento>0);
+
+  if(!comGasto.length){
+    tb.innerHTML=`<tr><td colspan="4"><div class="vazio">Nenhuma campanha no período.</div></td></tr>`;
     el('avisoCamp').textContent=''; return;
   }
   const f=periodoInteiro()?1:fatiaPeriodo();
-  tb.innerHTML=[...c].sort((a,b)=>b.investimento-a.investimento).map(x=>{
+  tb.innerHTML=[...comGasto].sort((a,b)=>b.investimento-a.investimento).map(x=>{
     const inv=x.investimento*f, res=Math.round(x.resultados*f);
     return `<tr>
       <td class="nome">${x.nome}</td>
-      <td><span class="pill ${x.status==='ACTIVE'?'on':'off'}">${x.status==='ACTIVE'?'ATIVA':'PAUSADA'}</span></td>
       <td class="num">${brl(inv)}</td><td class="num">${num(res)}</td>
       <td class="num">${res?brl(inv/res):'—'}</td></tr>`;
   }).join('');
   el('avisoCamp').textContent=periodoInteiro()?''
     :'Valores por campanha estimados para o período filtrado, rateados pela participação no investimento. Os totais no topo da página são exatos.';
-}
-
-function renderCriativos(){
-  const cr=DADOS.criativos||[], tb=el('tblCria').querySelector('tbody');
-  if(!cr.length){
-    tb.innerHTML=`<tr><td colspan="6"><div class="vazio">Nenhum anúncio no período.</div></td></tr>`;
-    el('avisoCria').textContent=''; return;
-  }
-  const f=periodoInteiro()?1:fatiaPeriodo();
-  tb.innerHTML=[...cr].sort((a,b)=>b.investimento-a.investimento).map(x=>{
-    const inv=x.investimento*f, res=Math.round(x.resultados*f);
-    const thumb=x.thumb
-      ?`<img class="thumb" src="${x.thumb}" alt="" loading="lazy" onerror="this.style.visibility='hidden'">`
-      :`<span class="thumb"></span>`;
-    return `<tr>
-      <td><div class="cria-cell">${thumb}<span class="nome">${x.nome}</span></div></td>
-      <td><span class="pill ${x.status==='ACTIVE'?'on':'off'}">${x.status==='ACTIVE'?'ATIVO':'PAUSADO'}</span></td>
-      <td class="num">${brl(inv)}</td><td class="num">${num(res)}</td>
-      <td class="num">${res?brl(inv/res):'—'}</td>
-      <td class="num">${x.link?`<a class="lnk" href="${x.link}" target="_blank" rel="noopener">abrir ↗</a>`:'—'}</td>
-    </tr>`;
-  }).join('');
-  el('avisoCria').textContent=periodoInteiro()?''
-    :'Valores por anúncio estimados para o período filtrado, rateados pela participação no investimento. Os totais no topo da página são exatos.';
 }
 
 function renderPublico(){
