@@ -885,19 +885,42 @@ function renderEvolucao(s){
 /* Campanhas e anuncios: a API entrega agregado do periodo inteiro.
    Quando o usuario filtra um sub-periodo, os valores sao rateados pela
    participacao do investimento — por isso o aviso explicito abaixo da tabela. */
+/* Soma campanha x dia dentro do filtro — numero real, sem rateio. */
+function campanhasNoFiltro(){
+  const linhas=DADOS.campanhas_por_dia||[];
+  const m=new Map();
+  for(const l of linhas){
+    if(l.data<FILTRO.de||l.data>FILTRO.ate)continue;
+    const a=m.get(l.nome)||{nome:l.nome,investimento:0,resultados:0,
+      rotulo_resultado:l.rotulo_resultado,grupo:l.grupo,grupo_nome:l.grupo_nome};
+    a.investimento+=l.investimento;
+    a.resultados+=l.resultados;
+    m.set(l.nome,a);
+  }
+  return [...m.values()].filter(x=>x.investimento>0)
+    .map(x=>({...x,investimento:Number(x.investimento.toFixed(2))}));
+}
+
 function renderCampanhas(){
   const c=DADOS.campanhas||[], tb=el('tblCamp').querySelector('tbody');
 
   /* Campanha sem investimento no periodo nao entra: ela nao aconteceu
      aqui. Antes apareciam campanhas antigas com valor residual, o que
-     dava a impressao de gasto atual em campanha ja pausada. */
-  const comGasto=c.filter(x=>x.investimento>0);
+     dava a impressao de gasto atual em campanha ja pausada.
+
+     Quando o JSON traz campanhas_por_dia, a tabela soma os dias reais
+     dentro do filtro. O rateio antigo distribuia o total do periodo
+     inteiro pela participacao no investimento — entao [CCC][LEADS], que
+     so gastou de marco a junho, recebia uma fatia de agosto e aparecia
+     gastando num mes em que estava desligada. */
+  const comGasto=DADOS.campanhas_por_dia
+    ? campanhasNoFiltro()
+    : c.filter(x=>x.investimento>0);
 
   if(!comGasto.length){
     tb.innerHTML=`<tr><td colspan="4"><div class="vazio">Nenhuma campanha no período.</div></td></tr>`;
     el('avisoCamp').textContent=''; return;
   }
-  const f=periodoInteiro()?1:fatiaPeriodo();
   /* Cada campanha traz o proprio rotulo de resultado (conversa, compra,
      lead...). Sem isso, o cabecalho unico "Resultados" fazia a campanha
      de formulario parecer fraca: mostrava compras onde havia leads. */
@@ -905,7 +928,7 @@ function renderCampanhas(){
   el('thCampRes').textContent=misto?'Resultado':rotulo();
 
   tb.innerHTML=[...comGasto].sort((a,b)=>b.investimento-a.investimento).map(x=>{
-    const inv=x.investimento*f, res=Math.round(x.resultados*f);
+    const inv=x.investimento, res=x.resultados;
     const rot=x.rotulo_resultado||rotulo();
     const cel=misto
       ? `${num(res)} <span style="color:var(--text);font-size:10px;font-weight:600">${rot.toLowerCase()}</span>`
@@ -915,8 +938,9 @@ function renderCampanhas(){
       <td class="num">${brl(inv)}</td><td class="num">${cel}</td>
       <td class="num">${res?brl(inv/res):'—'}</td></tr>`;
   }).join('');
-  el('avisoCamp').textContent=periodoInteiro()?''
-    :'Valores por campanha estimados para o período filtrado, rateados pela participação no investimento. Os totais no topo da página são exatos.';
+  el('avisoCamp').textContent=DADOS.campanhas_por_dia
+    ? 'Cada campanha soma apenas os dias dentro do período filtrado. Campanha sem gasto no período não aparece.'
+    : 'Valores por campanha estimados para o período filtrado, rateados pela participação no investimento. Os totais no topo da página são exatos.';
 }
 
 function renderPublico(){
