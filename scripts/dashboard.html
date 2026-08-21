@@ -164,6 +164,19 @@ td.sub{padding-left:26px;}
 .mes-pt{width:7px;height:7px;border-radius:2px;}
 
 /* ---- Criativos ativos ---- */
+/* Cada campanha ocupa a largura toda e empilha: em colunas lado a lado,
+   a campanha com 5 criativos esticava e as de 2 deixavam um vazio alto
+   ao lado, sugerindo que faltava conteudo. */
+#criatGrid{display:block;}
+.cc{margin-top:24px;}
+.cc:first-child{margin-top:8px;}
+.cc-h{display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;
+  gap:6px 14px;padding:0 2px 10px;margin-bottom:2px;border-bottom:1px solid var(--border);}
+.cc-n{font-size:11.5px;font-weight:800;color:#fff;letter-spacing:-.1px;}
+.cc-g{display:inline-block;margin-left:8px;font-size:9px;font-weight:700;color:var(--lilac);
+  text-transform:uppercase;letter-spacing:.06em;}
+.cc-v{font-size:10.5px;color:var(--text2);font-weight:700;}
+.cc-nota{color:var(--text);font-weight:600;font-style:italic;margin-left:6px;}
 .criat-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(268px,1fr));gap:14px;margin-top:6px;}
 .criat{background:rgba(255,255,255,0.02);border:1px solid var(--border);border-radius:14px;overflow:hidden;
   display:flex;flex-direction:column;transition:border-color .18s,transform .18s;}
@@ -830,57 +843,92 @@ function renderCriativos(){
   el('criatSub').textContent=
     `${c.length} no ar · desempenho de ${p?diaCurto(p.de)+' a '+diaCurto(p.ate):'período'}`;
 
-  /* "melhor" so tem sentido dentro do mesmo produto: comparar custo por
-     conversa com custo por compra seria comparar moedas diferentes.
+  /* O "melhor" e eleito DENTRO de cada campanha — e nela que a decisao
+     acontece: os criativos disputam o mesmo orcamento, o mesmo publico e
+     a mesma oferta. Comparar entre campanhas nao ajudaria a decidir nada,
+     porque o custo muda com o publico e o objetivo, nao so com o criativo.
 
      E so vale com volume. Um criativo que gastou R$ 0,44 e trouxe 5
      cliques da um custo unitario otimo por acidente estatistico — premiar
      isso mandaria escalar o criativo errado. Por isso o selo exige pelo
-     menos 10% do investimento do grupo e 10 resultados. */
-  const invPorGrupo={};
-  for(const x of comDados) invPorGrupo[x.grupo]=(invPorGrupo[x.grupo]||0)+x.investimento;
-
+     menos 10 resultados e 10% do investimento da campanha. */
   const MIN_RES=10, MIN_FATIA=0.10;
-  const elegivel=x=>x.custo_por_resultado!==null
-    && x.resultados>=MIN_RES
-    && x.investimento>=(invPorGrupo[x.grupo]||0)*MIN_FATIA;
 
-  const melhorPorGrupo={};
-  for(const x of comDados){
-    if(!elegivel(x))continue;
-    const at=melhorPorGrupo[x.grupo];
-    if(at===undefined||x.custo_por_resultado<at)melhorPorGrupo[x.grupo]=x.custo_por_resultado;
+  const porCampanha=new Map();
+  for(const x of c){
+    const k=x.campanha||'(sem campanha)';
+    const g=porCampanha.get(k)||{nome:k,grupo_nome:x.grupo_nome,itens:[],investimento:0,resultados:0,
+      rotulo:x.rotulo_resultado};
+    g.itens.push(x);
+    g.investimento+=x.investimento;
+    g.resultados+=x.resultados;
+    porCampanha.set(k,g);
   }
 
-  el('criatGrid').innerHTML=c.map(x=>{
-    const top=!x.sem_dados_no_periodo&&elegivel(x)
-      &&melhorPorGrupo[x.grupo]===x.custo_por_resultado;
-    const th=x.miniatura
-      ? `<img class="criat-th" src="${x.miniatura}" alt="" onerror="this.outerHTML='<div class=\\'criat-th-v\\'>▶</div>'">`
-      : `<div class="criat-th-v">▶</div>`;
-    const link=x.link
-      ? `<a class="criat-a" href="${x.link}" target="_blank" rel="noopener">Abrir criativo ↗</a>`
-      : `<span class="criat-a off">Sem link de preview</span>`;
-    const cpr=x.sem_dados_no_periodo?'—':(x.custo_por_resultado?brl(x.custo_por_resultado):'—');
-    return `<div class="criat-w"><div class="criat ${top?'top':''} ${x.sem_dados_no_periodo?'sd':''}">
-      ${top?'<span class="criat-tag">MELHOR</span>':''}
-      <div class="criat-top">${th}
-        <div class="criat-i"><div class="criat-n">${x.nome}</div>
-          <div class="criat-g">${x.grupo_nome}</div></div></div>
-      <div class="criat-m">
-        <div class="criat-mc"><div class="criat-mv">${brl(x.investimento)}</div>
-          <div class="criat-ml">Investido</div></div>
-        <div class="criat-mc"><div class="criat-mv">${num(x.resultados)}</div>
-          <div class="criat-ml">${x.rotulo_resultado}</div></div>
-        <div class="criat-mc"><div class="criat-mv ${top?'dest':''}">${cpr}</div>
-          <div class="criat-ml">Custo un.</div></div>
-      </div>${link}</div></div>`;
+  const grupos=[...porCampanha.values()].sort((a,b)=>b.investimento-a.investimento);
+
+  el('criatGrid').innerHTML=grupos.map(g=>{
+    const elegivel=x=>!x.sem_dados_no_periodo
+      && x.custo_por_resultado!==null
+      && x.resultados>=MIN_RES
+      && x.investimento>=g.investimento*MIN_FATIA;
+
+    let melhor=null;
+    for(const x of g.itens){
+      if(!elegivel(x))continue;
+      if(melhor===null||x.custo_por_resultado<melhor)melhor=x.custo_por_resultado;
+    }
+
+    const itens=[...g.itens].sort((a,b)=>{
+      if(a.sem_dados_no_periodo!==b.sem_dados_no_periodo)return a.sem_dados_no_periodo?1:-1;
+      if(a.custo_por_resultado===null&&b.custo_por_resultado===null)return b.investimento-a.investimento;
+      if(a.custo_por_resultado===null)return 1;
+      if(b.custo_por_resultado===null)return -1;
+      return a.custo_por_resultado-b.custo_por_resultado;
+    });
+
+    const cards=itens.map(x=>{
+      const top=elegivel(x)&&melhor===x.custo_por_resultado;
+      const th=x.miniatura
+        ? `<img class="criat-th" src="${x.miniatura}" alt="" onerror="this.outerHTML='<div class=\\'criat-th-v\\'>▶</div>'">`
+        : `<div class="criat-th-v">▶</div>`;
+      const link=x.link
+        ? `<a class="criat-a" href="${x.link}" target="_blank" rel="noopener">Abrir criativo ↗</a>`
+        : `<span class="criat-a off">Sem link de preview</span>`;
+      const cpr=x.sem_dados_no_periodo?'—':(x.custo_por_resultado?brl(x.custo_por_resultado):'—');
+      return `<div class="criat-w"><div class="criat ${top?'top':''} ${x.sem_dados_no_periodo?'sd':''}">
+        ${top?'<span class="criat-tag">MELHOR</span>':''}
+        <div class="criat-top">${th}
+          <div class="criat-i"><div class="criat-n">${x.nome}</div>
+            <div class="criat-g">${x.sem_dados_no_periodo?'sem entrega no período':x.rotulo_resultado}</div></div></div>
+        <div class="criat-m">
+          <div class="criat-mc"><div class="criat-mv">${brl(x.investimento)}</div>
+            <div class="criat-ml">Investido</div></div>
+          <div class="criat-mc"><div class="criat-mv">${num(x.resultados)}</div>
+            <div class="criat-ml">${x.rotulo_resultado}</div></div>
+          <div class="criat-mc"><div class="criat-mv ${top?'dest':''}">${cpr}</div>
+            <div class="criat-ml">Custo un.</div></div>
+        </div>${link}</div></div>`;
+    }).join('');
+
+    const custoCamp=g.resultados>0?brl(g.investimento/g.resultados):'—';
+    /* Sem nenhum criativo elegivel, a campanha nao elege melhor: dizer
+       isso e mais util do que premiar o unico que entregou. */
+    const nota=melhor===null
+      ? `<span class="cc-nota">sem volume para eleger o melhor</span>` : '';
+    return `<div class="cc">
+      <div class="cc-h">
+        <div class="cc-n">${g.nome}<span class="cc-g">${g.grupo_nome}</span></div>
+        <div class="cc-v">${brl(g.investimento)} · ${num(g.resultados)} ${g.rotulo.toLowerCase()} · ${custoCamp} cada ${nota}</div>
+      </div>
+      <div class="criat-grid">${cards}</div>
+    </div>`;
   }).join('');
 
   const sd=c.length-comDados.length;
   el('avisoCriat').textContent=
     'Só aparecem os criativos ativos neste momento — um anúncio pausado sai da lista, mesmo que tenha gasto no período. '
-    +`O selo "melhor" compara o custo dentro do mesmo produto, nunca entre produtos diferentes, e só considera criativos com pelo menos ${MIN_RES} resultados e 10% do investimento do produto — um criativo com gasto muito baixo pode ter custo unitário ótimo por acaso.`
+    +`O selo "melhor" é eleito dentro de cada campanha, onde os criativos disputam o mesmo orçamento e o mesmo público, e só entram os que têm pelo menos ${MIN_RES} resultados e 10% do investimento da campanha — um criativo com gasto muito baixo pode ter custo unitário ótimo por acaso.`
     +(sd?` ${sd} criativo(s) ativo(s) ainda sem entrega no período aparecem esmaecidos.`:'');
 }
 
