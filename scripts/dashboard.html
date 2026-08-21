@@ -143,6 +143,18 @@ tbody tr:hover{background:rgba(168,85,247,0.03);}
 .prod-r{display:flex;gap:18px;margin-top:14px;padding-top:14px;border-top:1px solid var(--border);}
 .prod-rv{font-size:16px;font-weight:800;color:#fff;}
 .prod-rl{font-size:9.5px;color:var(--text);font-weight:600;margin-top:2px;line-height:1.3;}
+.prod.off{opacity:.62;}
+.prod-off{display:inline-block;margin-left:7px;font-size:8.5px;font-weight:800;
+  padding:2px 6px;border-radius:4px;background:rgba(255,255,255,0.08);
+  color:var(--text2);text-transform:uppercase;letter-spacing:.05em;vertical-align:middle;}
+.prod-c{margin-top:12px;padding-top:11px;border-top:1px solid var(--border);
+  font-size:9.5px;color:var(--text);font-weight:600;line-height:1.5;}
+.prod-ci{display:block;color:var(--text2);margin-top:3px;font-size:9.5px;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+tr.grp td{background:rgba(168,85,247,0.07);font-size:9.5px;font-weight:800;
+  color:var(--light);text-transform:uppercase;letter-spacing:.07em;padding:9px 14px;}
+tr.grp .gv{float:right;color:var(--text2);text-transform:none;letter-spacing:0;font-weight:700;}
+td.sub{padding-left:26px;}
 
 /* ---- Investimento mensal ---- */
 .mes-barra{display:flex;height:8px;border-radius:4px;overflow:hidden;background:rgba(255,255,255,0.05);min-width:160px;}
@@ -247,7 +259,7 @@ tbody tr:hover{background:rgba(168,85,247,0.03);}
     <!-- EVOLUCAO -->
     <div class="sec-t">Evolução no período</div>
     <div class="card">
-      <div class="card-t">Investimento e resultados por dia</div>
+      <div class="card-t" id="evoT">Investimento e resultados por dia</div>
       <div class="card-s" id="evoSub"></div>
       <div class="chart-box"><canvas id="chEvo"></canvas></div>
     </div>
@@ -657,6 +669,38 @@ function render(){
   renderProdutos(); renderMensal(); renderCriativos();
 }
 
+/* Topo de conta multi-produto: visao geral do que e somavel.
+   Investimento e alcance somam entre produtos; resultado nao. */
+function renderKPIsGerais({inv,imp,alc,inteiro,mensal,dias,metas}){
+  const cards=[];
+
+  let bInv='';
+  if(metas.investimento_previsto&&mensal){
+    const p=(inv/metas.investimento_previsto)*100, estourou=p>100;
+    bInv=`<div class="meta-bar">
+      <div class="meta-track"><div class="meta-fill" style="width:${Math.min(100,p)}%;background:${estourou?'var(--yellow)':'linear-gradient(90deg,var(--purple),var(--lilac))'}"></div></div>
+      <div class="meta-txt"${estourou?' style="color:var(--yellow)"':''}>${p.toFixed(0)}% do previsto (${brl(metas.investimento_previsto)})</div></div>`;
+  }
+  cards.push(`<div class="kpi hero"><div class="kpi-l">Investimento total</div>
+    <div class="kpi-v">${brl(inv)}</div>
+    <div class="kpi-f">${dias?brl(inv/dias)+' por dia':'—'}</div>${bInv}</div>`);
+
+  cards.push(`<div class="kpi"><div class="kpi-l">Pessoas alcançadas</div>
+    <div class="kpi-v">${num(alc)}</div>
+    <div class="kpi-f">${inteiro?'sem repetir pessoa':'soma diária · repete quem viu em dias diferentes'}</div></div>`);
+
+  cards.push(`<div class="kpi"><div class="kpi-l">Exibições</div>
+    <div class="kpi-v">${num(imp)}</div>
+    <div class="kpi-f">${alc?(imp/alc).toFixed(2).replace('.',',')+' vezes por pessoa':''}</div></div>`);
+
+  const qtd=Object.keys(DADOS.grupos_produto||{}).length;
+  cards.push(`<div class="kpi"><div class="kpi-l">Produtos no período</div>
+    <div class="kpi-v">${qtd}</div>
+    <div class="kpi-f">resultado de cada um logo abaixo</div></div>`);
+
+  el('kpis').innerHTML=cards.join('');
+}
+
 /* ---------- Produtos ----------
    Cada grupo tem a sua propria moeda de resultado. Ficam lado a lado e
    NUNCA somados — juntar compra com lead numa coluna so nao significa nada.
@@ -666,29 +710,75 @@ const CORES_PROD=['#A855F7','#4ade80','#38bdf8','#facc15','#f87171'];
 
 function corProduto(i){return CORES_PROD[i%CORES_PROD.length];}
 
+/* Produtos no periodo filtrado, montados a partir de campanhas_por_dia
+   (a mesma fonte da tabela de campanhas). Assim produto e campanha nunca
+   discordam, e o bloco acompanha o filtro em vez de ficar preso no
+   recorte de 2 meses do gerador. */
+function produtosNoFiltro(){
+  const linhas=DADOS.campanhas_por_dia;
+  const meta=DADOS.grupos_produto||{};
+  if(!linhas) return Object.values(meta).sort((a,b)=>b.investimento-a.investimento);
+
+  const m=new Map();
+  for(const l of linhas){
+    if(l.data<FILTRO.de||l.data>FILTRO.ate)continue;
+    const base=meta[l.grupo]||{};
+    const a=m.get(l.grupo)||{
+      id:l.grupo, nome:l.grupo_nome, descricao:base.descricao||'',
+      rotulo_resultado:l.rotulo_resultado,
+      investimento:0, resultados:0, campanhas:new Set(),
+    };
+    a.investimento+=l.investimento;
+    a.resultados+=l.resultados;
+    a.campanhas.add(l.nome);
+    m.set(l.grupo,a);
+  }
+
+  return [...m.values()]
+    .filter(p=>p.investimento>0)
+    .map(p=>({
+      ...p,
+      investimento:Number(p.investimento.toFixed(2)),
+      campanhas:[...p.campanhas],
+      custo_por_resultado:p.resultados>0
+        ? Number((p.investimento/p.resultados).toFixed(2)) : null,
+    }))
+    .sort((a,b)=>b.investimento-a.investimento);
+}
+
 function renderProdutos(){
-  const g=DADOS.grupos_produto||{};
-  const lista=Object.values(g).sort((a,b)=>b.investimento-a.investimento);
+  const lista=produtosNoFiltro();
   if(!lista.length){el('secProdutos').style.display='none';return;}
   el('secProdutos').style.display='';
 
+  const total=lista.reduce((s,p)=>s+p.investimento,0);
+
   el('prodGrid').innerHTML=lista.map((p,i)=>{
     const cor=corProduto(i);
-    const sec=p.secundario!==null&&p.rotulo_secundario
-      ? `<div><div class="prod-rv">${num(p.secundario)}</div>
-           <div class="prod-rl">${p.rotulo_secundario}</div></div>` : '';
-    return `<div class="prod" style="border-left:3px solid ${cor}">
-      <div class="prod-n">${p.nome}</div>
+    const fatia=total?(p.investimento/total*100):0;
+    /* Uma campanha: mostra o nome. Varias: diz quantas sao, porque o
+       Academy Pro e um produto so dividido em duas campanhas — o cliente
+       precisa ver que o numero ja vem somado. */
+    const camps=p.campanhas.length===1
+      ? `<div class="prod-c">${p.campanhas[0]}</div>`
+      : `<div class="prod-c">${p.campanhas.length} campanhas somadas:${
+          p.campanhas.map(n=>`<span class="prod-ci">${n}</span>`).join('')}</div>`;
+    /* Produto sem nenhuma campanha ativa: ele gastou no periodo mas nao
+       esta mais no ar. Sem essa marca, o card sugere que ainda roda. */
+    const st=(DADOS.status_grupos||{})[p.id];
+    const parado=st&&st.ativas===0;
+    return `<div class="prod ${parado?'off':''}" style="border-left:3px solid ${cor}">
+      <div class="prod-n">${p.nome}${parado?'<span class="prod-off">parado</span>':''}</div>
       <div class="prod-d">${p.descricao||''}</div>
       <div class="prod-inv" style="color:${cor}">${brl(p.investimento)}</div>
-      <div class="prod-l">Investido</div>
+      <div class="prod-l">Investido · ${fatia.toFixed(0)}% da conta</div>
       <div class="prod-r">
         <div><div class="prod-rv">${num(p.resultados)}</div>
           <div class="prod-rl">${p.rotulo_resultado}</div></div>
         <div><div class="prod-rv">${p.custo_por_resultado?brl(p.custo_por_resultado):'—'}</div>
           <div class="prod-rl">Custo unitário</div></div>
-        ${sec}
-      </div></div>`;
+      </div>
+      ${camps}</div>`;
   }).join('');
 }
 
@@ -804,6 +894,15 @@ function renderKPIs(s){
   const mensal=filtroEhUmMes();   // metas so aparecem em recorte de 1 mes
   // alcance real (deduplicado) so vale para o periodo inteiro
   const alc=inteiro&&DADOS.alcance_periodo?DADOS.alcance_periodo:alcSoma;
+
+  /* Conta com varios produtos: o topo fica so com o que e somavel de
+     verdade — dinheiro e gente. Resultado nao entra aqui porque a conta
+     entrega em moedas diferentes (conversa, compra, lead, clique) e
+     somar as quatro numa cifra so nao significa nada. O resultado de
+     cada produto aparece no bloco Produtos, logo abaixo. */
+  if(DADOS.grupos_produto&&Object.keys(DADOS.grupos_produto).length>1)
+    return renderKPIsGerais({inv,imp,alc,inteiro,mensal,dias:s.length,metas:m});
+
   const cards=[];
 
   let bInv='';
@@ -849,8 +948,32 @@ function renderEvolucao(s){
   // nao desenha nada (ponto solto), por isso o ponto vira visivel.
   const poucos=s.length<=3;
 
-  CHARTS.evo=new Chart(el('chEvo'),{
-    data:{labels:s.map(x=>diaCurto(x.data)),datasets:[
+  /* Conta multi-produto: a linha de "resultados" mostrava so compras — a
+     moeda de UM produto — em cima do investimento de todos. Aqui as
+     barras viram investimento por produto, empilhado por dia, que e o
+     unico numero comparavel entre eles. */
+  const prods=DADOS.campanhas_por_dia?produtosNoFiltro():[];
+  const multi=prods.length>1;
+  if(el('evoT')) el('evoT').textContent=multi
+    ? 'Investimento por produto, dia a dia' : 'Investimento e resultados por dia';
+  let datasets;
+
+  if(multi){
+    const porDia={};
+    for(const l of DADOS.campanhas_por_dia){
+      if(l.data<FILTRO.de||l.data>FILTRO.ate)continue;
+      (porDia[l.grupo]=porDia[l.grupo]||{})[l.data]=
+        ((porDia[l.grupo]||{})[l.data]||0)+l.investimento;
+    }
+    datasets=prods.map((p,i)=>{
+      const cor=corProduto(i);
+      return {type:'bar',label:p.nome,
+        data:s.map(x=>Number(((porDia[p.id]||{})[x.data]||0).toFixed(2))),
+        backgroundColor:cor+'99',borderColor:cor,borderWidth:1,borderRadius:3,
+        stack:'inv',yAxisID:'y',...(poucos?{barThickness:56}:{maxBarThickness:44})};
+    });
+  }else{
+    datasets=[
       {type:'bar',label:'Investimento',data:s.map(x=>x.investimento),
        backgroundColor:'rgba(107,33,232,0.45)',borderColor:'rgba(168,85,247,0.7)',
        borderWidth:1,borderRadius:3,yAxisID:'y',order:2,
@@ -860,7 +983,11 @@ function renderEvolucao(s){
        borderWidth:2,pointRadius:poucos?5:0,pointHoverRadius:5,
        pointBackgroundColor:'#4ade80',pointBorderColor:'rgba(11,9,32,0.9)',pointBorderWidth:2,
        tension:.35,fill:!poucos,yAxisID:'y1',order:1},
-    ]},
+    ];
+  }
+
+  CHARTS.evo=new Chart(el('chEvo'),{
+    data:{labels:s.map(x=>diaCurto(x.data)),datasets},
     options:{responsive:true,maintainAspectRatio:false,
       interaction:{mode:'index',intersect:false},
       plugins:{
@@ -869,15 +996,22 @@ function renderEvolucao(s){
         tooltip:{backgroundColor:'rgba(11,9,32,0.96)',borderColor:'rgba(168,85,247,0.3)',borderWidth:1,
           titleFont:{family:'Montserrat',size:12,weight:'700'},bodyFont:{family:'Montserrat',size:12},
           padding:12,cornerRadius:8,
-          callbacks:{label:c=>c.datasetIndex===0
-            ?'  Investimento: '+brl(c.parsed.y):'  '+rotulo()+': '+num(c.parsed.y)}}},
+          callbacks:{
+            label:c=>multi
+              ? '  '+c.dataset.label+': '+brl(c.parsed.y)
+              : (c.datasetIndex===0?'  Investimento: '+brl(c.parsed.y)
+                                   :'  '+rotulo()+': '+num(c.parsed.y)),
+            footer:it=>multi
+              ? 'Total do dia: '+brl(it.reduce((s,c)=>s+c.parsed.y,0)) : ''}}},
       scales:{
-        x:{grid:{display:false},ticks:{color:'rgba(255,255,255,0.30)',font:{family:'Montserrat',size:9},
+        x:{stacked:multi,grid:{display:false},
+          ticks:{color:'rgba(255,255,255,0.30)',font:{family:'Montserrat',size:9},
           maxRotation:0,autoSkip:true,maxTicksLimit:14}},
-        y:{position:'left',beginAtZero:true,grid:{color:'rgba(255,255,255,0.04)'},
+        y:{position:'left',stacked:multi,beginAtZero:true,grid:{color:'rgba(255,255,255,0.04)'},
           ticks:{color:'rgba(255,255,255,0.30)',font:{family:'Montserrat',size:10},callback:v=>brlCurto(v)}},
-        y1:{position:'right',beginAtZero:true,grid:{display:false},
-          ticks:{color:'rgba(74,222,128,0.55)',font:{family:'Montserrat',size:10},precision:0}},
+        // eixo da direita so existe quando ha linha de resultados
+        ...(multi?{}:{y1:{position:'right',beginAtZero:true,grid:{display:false},
+          ticks:{color:'rgba(74,222,128,0.55)',font:{family:'Montserrat',size:10},precision:0}}}),
       }}
   });
 }
@@ -927,17 +1061,35 @@ function renderCampanhas(){
   const misto=new Set(comGasto.map(x=>x.rotulo_resultado||rotulo())).size>1;
   el('thCampRes').textContent=misto?'Resultado':rotulo();
 
-  tb.innerHTML=[...comGasto].sort((a,b)=>b.investimento-a.investimento).map(x=>{
+  const linha=(x,sub)=>{
     const inv=x.investimento, res=x.resultados;
     const rot=x.rotulo_resultado||rotulo();
     const cel=misto
       ? `${num(res)} <span style="color:var(--text);font-size:10px;font-weight:600">${rot.toLowerCase()}</span>`
       : num(res);
     return `<tr>
-      <td class="nome">${x.nome}</td>
+      <td class="nome${sub?' sub':''}">${x.nome}</td>
       <td class="num">${brl(inv)}</td><td class="num">${cel}</td>
       <td class="num">${res?brl(inv/res):'—'}</td></tr>`;
-  }).join('');
+  };
+
+  /* Com produtos definidos, as campanhas ficam agrupadas por produto:
+     o Academy Pro sao duas campanhas do mesmo produto, e ve-las soltas
+     na lista sugeria dois negocios diferentes. */
+  const prods=DADOS.campanhas_por_dia?produtosNoFiltro():[];
+  if(prods.length){
+    tb.innerHTML=prods.map(p=>{
+      const doGrupo=comGasto
+        .filter(x=>x.grupo===p.id)
+        .sort((a,b)=>b.investimento-a.investimento);
+      const cab=`<tr class="grp"><td colspan="4">${p.nome}
+        <span class="gv">${brl(p.investimento)} · ${num(p.resultados)} ${p.rotulo_resultado.toLowerCase()}</span></td></tr>`;
+      return cab+doGrupo.map(x=>linha(x,doGrupo.length>1)).join('');
+    }).join('');
+  }else{
+    tb.innerHTML=[...comGasto].sort((a,b)=>b.investimento-a.investimento)
+      .map(x=>linha(x,false)).join('');
+  }
   el('avisoCamp').textContent=DADOS.campanhas_por_dia
     ? 'Cada campanha soma apenas os dias dentro do período filtrado. Campanha sem gasto no período não aparece.'
     : 'Valores por campanha estimados para o período filtrado, rateados pela participação no investimento. Os totais no topo da página são exatos.';
