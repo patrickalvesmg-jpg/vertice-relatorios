@@ -202,24 +202,18 @@ function prepararBase(html) {
     '/* iniciar() e chamado pelo portao de senha, apos decifrar. */' +
     html.slice(ultima + autoStart.length);
 
-  // --- abre em 2 meses em vez de 30 dias ---
-  // O painel chamava aplicar('30'); o filtro de 2 meses e por data, entao
-  // usamos os proprios limites da serie.
-  html = html.replace(
-    /aplicar\(\s*'30'\s*\)\s*;/,
-    `(function(){
-    /* abre nos ultimos 2 meses de dados, nao em 30 dias */
-    const s=DADOS.serie_diaria||[];
-    if(!s.length) return aplicar('tudo');
-    const fim=s[s.length-1].data;
-    const ini=addDias(fim,-61);
-    const de=(s[0].data>ini)?s[0].data:ini;
-    el('fDe').value=de; el('fAte').value=fim;
-    FILTRO={de:de,ate:fim};
-    document.querySelectorAll('.f-btn').forEach(b=>b.classList.remove('on'));
-    render();
-  })();`
-  );
+  // --- filtro de abertura ---
+  // O painel abre no mes corrente (aplicar('mes')), decisao do Patrick em
+  // 21/08/2026. O site publicado usa o MESMO filtro: antes ele sobrescrevia
+  // com um recorte de 2 meses, e o cliente caia num total acumulado em vez
+  // do mes. Aqui so conferimos que a chamada continua existindo — se o
+  // original mudar de forma, e melhor parar do que publicar em silencio
+  // com um filtro que ninguem escolheu.
+  if (!/aplicar\(\s*'mes'\s*\)\s*;/.test(html)) {
+    console.error('\nNao encontrei aplicar(\'mes\') no dashboard.html.');
+    console.error('O filtro de abertura mudou — ajuste scripts/publicar.js.\n');
+    process.exit(1);
+  }
 
   // --- o seletor de cliente nao faz sentido numa pagina de um cliente so ---
   html = html.replace(

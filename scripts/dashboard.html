@@ -507,7 +507,7 @@ async function iniciar(){
     montarSeletor(ativos,cli.slug);
     montarCabecalho();
     prepararFiltro();
-    aplicar('30');           // abre nos ultimos 30 dias com dados
+    aplicar('mes');          // abre no mes corrente, nao no historico todo
 
     progresso(100,'PRONTO');
     setTimeout(()=>{el('loader').classList.add('hidden');el('dash').classList.add('on');},260);
@@ -587,12 +587,22 @@ function montarCabecalho(){
 }
 
 /* ---------- filtro ---------- */
+let FILTRO_PRONTO=false;
+
 function prepararFiltro(){
   const s=DADOS.serie_diaria||[];
   if(!s.length) return;
   const min=s[0].data, max=s[s.length-1].data;
+
+  /* Os limites das datas mudam a cada carga (o ultimo dia avanca), mas os
+     listeners so podem ser registrados uma vez: o auto-refresh chama esta
+     funcao de novo a cada 5 min, e sem a trava cada clique num atalho
+     dispararia render() varias vezes. */
+  for(const id of ['fDe','fAte']){ el(id).min=min; el(id).max=max; }
+  if(FILTRO_PRONTO) return;
+  FILTRO_PRONTO=true;
+
   for(const id of ['fDe','fAte']){
-    el(id).min=min; el(id).max=max;
     el(id).addEventListener('change',()=>{
       FILTRO={de:el('fDe').value,ate:el('fAte').value};
       document.querySelectorAll('.f-btn').forEach(b=>b.classList.remove('on'));
