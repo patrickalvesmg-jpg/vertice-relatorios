@@ -189,6 +189,9 @@ td.sub{padding-left:26px;}
 .criat-i{min-width:0;flex:1;}
 .criat-n{font-size:11.5px;font-weight:700;color:#fff;line-height:1.35;
   display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
+.criat-off{display:inline-block;margin-left:6px;font-size:8px;font-weight:800;
+  padding:2px 5px;border-radius:4px;background:rgba(255,255,255,0.09);
+  color:var(--text2);text-transform:uppercase;letter-spacing:.05em;vertical-align:middle;}
 .criat-g{font-size:9.5px;color:var(--lilac);font-weight:700;margin-top:4px;
   text-transform:uppercase;letter-spacing:.05em;}
 .criat-m{display:grid;grid-template-columns:1fr 1fr 1fr;gap:1px;background:var(--border);margin-top:auto;}
@@ -305,7 +308,7 @@ td.sub{padding-left:26px;}
     <div id="secCriativos" style="display:none;">
       <div class="sec-t">Criativos no ar agora</div>
       <div class="card">
-        <div class="card-t">Somente anúncios ativos neste momento</div>
+        <div class="card-t">Desempenho por criativo, dentro de cada campanha</div>
         <div class="card-s" id="criatSub"></div>
         <div class="criat-grid" id="criatGrid"></div>
         <div class="aviso" id="avisoCriat"></div>
@@ -864,7 +867,7 @@ function criativosNoFiltro(){
     acc.set(l.ad_id,a);
   }
 
-  return base.map(x=>{
+  const lista=base.map(x=>{
     const a=acc.get(x.id);
     const inv=a?Number(a.investimento.toFixed(2)):0;
     const res=a?a.resultados:0;
@@ -875,6 +878,19 @@ function criativosNoFiltro(){
       sem_dados_no_periodo:inv===0,
     };
   });
+
+  /* Criativo pausado so aparece se pesou de verdade. A campanha do CFC
+     Express tem 74 anuncios parados; listar todos enterraria os poucos
+     que venderam. Corte: 2% do investimento da propria campanha. O
+     ativo nunca e cortado — esta no ar, precisa ser visto. */
+  const invCamp={};
+  for(const x of lista) invCamp[x.campanha]=(invCamp[x.campanha]||0)+x.investimento;
+
+  return lista.filter(x=>{
+    if(x.ativo!==false) return true;
+    if(x.investimento<=0) return false;
+    return x.investimento>=(invCamp[x.campanha]||0)*0.02;
+  });
 }
 
 function renderCriativos(){
@@ -883,8 +899,11 @@ function renderCriativos(){
   el('secCriativos').style.display='';
 
   const comDados=c.filter(x=>!x.sem_dados_no_periodo);
+  const nAtivos=c.filter(x=>x.ativo!==false).length;
+  const nPausados=c.length-nAtivos;
   el('criatSub').textContent=
-    `${c.length} no ar · desempenho de ${diaCurto(FILTRO.de)} a ${diaCurto(FILTRO.ate)}`;
+    `${nAtivos} no ar${nPausados?` · ${nPausados} pausado(s) que entregaram`:''}`
+    +` · desempenho de ${diaCurto(FILTRO.de)} a ${diaCurto(FILTRO.ate)}`;
 
   /* O "melhor" e eleito DENTRO de cada campanha — e nela que a decisao
      acontece: os criativos disputam o mesmo orcamento, o mesmo publico e
@@ -897,15 +916,36 @@ function renderCriativos(){
      menos 10 resultados e 10% do investimento da campanha. */
   const MIN_RES=10, MIN_FATIA=0.10;
 
+  /* O mesmo criativo costuma rodar em varios conjuntos da campanha, e a
+     API devolve uma linha por conjunto. Sem juntar, "ADS 07" aparecia
+     tres vezes com o gasto partido — e nenhuma das partes mostrava o que
+     o criativo realmente entregou. Aqui viram um card so, somado. */
   const porCampanha=new Map();
   for(const x of c){
     const k=x.campanha||'(sem campanha)';
-    const g=porCampanha.get(k)||{nome:k,grupo_nome:x.grupo_nome,itens:[],investimento:0,resultados:0,
-      rotulo:x.rotulo_resultado};
-    g.itens.push(x);
+    const g=porCampanha.get(k)||{nome:k,grupo_nome:x.grupo_nome,porNome:new Map(),
+      investimento:0,resultados:0,rotulo:x.rotulo_resultado};
+
+    const j=g.porNome.get(x.nome);
+    if(j){
+      j.investimento=Number((j.investimento+x.investimento).toFixed(2));
+      j.resultados+=x.resultados;
+      j.copias=(j.copias||1)+1;
+      j.ativo=j.ativo||x.ativo;   // ativo em algum conjunto = ativo
+      j.custo_por_resultado=j.resultados>0
+        ? Number((j.investimento/j.resultados).toFixed(2)) : null;
+      j.sem_dados_no_periodo=j.investimento===0;
+    }else{
+      g.porNome.set(x.nome,{...x});
+    }
+
     g.investimento+=x.investimento;
     g.resultados+=x.resultados;
     porCampanha.set(k,g);
+  }
+  for(const g of porCampanha.values()){
+    g.itens=[...g.porNome.values()];
+    g.investimento=Number(g.investimento.toFixed(2));
   }
 
   const grupos=[...porCampanha.values()].sort((a,b)=>b.investimento-a.investimento);
@@ -939,11 +979,13 @@ function renderCriativos(){
         ? `<a class="criat-a" href="${x.link}" target="_blank" rel="noopener">Abrir criativo ↗</a>`
         : `<span class="criat-a off">Sem link de preview</span>`;
       const cpr=x.sem_dados_no_periodo?'—':(x.custo_por_resultado?brl(x.custo_por_resultado):'—');
+      const pausado=x.ativo===false;
       return `<div class="criat-w"><div class="criat ${top?'top':''} ${x.sem_dados_no_periodo?'sd':''}">
         ${top?'<span class="criat-tag">MELHOR</span>':''}
         <div class="criat-top">${th}
-          <div class="criat-i"><div class="criat-n">${x.nome}</div>
-            <div class="criat-g">${x.sem_dados_no_periodo?'sem entrega no período':x.rotulo_resultado}</div></div></div>
+          <div class="criat-i"><div class="criat-n">${x.nome}${pausado?'<span class="criat-off">pausado</span>':''}</div>
+            <div class="criat-g">${x.sem_dados_no_periodo?'sem entrega no período':x.rotulo_resultado}${
+              x.copias>1?` · ${x.copias} conjuntos`:''}</div></div></div>
         <div class="criat-m">
           <div class="criat-mc"><div class="criat-mv">${brl(x.investimento)}</div>
             <div class="criat-ml">Investido</div></div>
@@ -970,7 +1012,7 @@ function renderCriativos(){
 
   const sd=c.length-comDados.length;
   el('avisoCriat').textContent=
-    'Só aparecem os criativos ativos neste momento — um anúncio pausado sai da lista, mesmo que tenha gasto no período. '
+    'Mostra os criativos no ar agora. De produtos já encerrados, entram também os pausados que pesaram no período (marcados como "pausado"), porque o que eles entregaram orienta a próxima rodada — os que quase não gastaram ficam de fora para não enterrar o resto. '
     +`O selo "melhor" é eleito dentro de cada campanha, onde os criativos disputam o mesmo orçamento e o mesmo público, e só entram os que têm pelo menos ${MIN_RES} resultados e 10% do investimento da campanha — um criativo com gasto muito baixo pode ter custo unitário ótimo por acaso.`
     +(sd?` ${sd} criativo(s) ativo(s) ainda sem entrega no período aparecem esmaecidos.`:'');
 }
