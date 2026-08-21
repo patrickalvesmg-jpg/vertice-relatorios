@@ -807,16 +807,20 @@ function renderProdutos(){
 
 /* ---------- Investimento por mes ---------- */
 function renderMensal(){
-  const m=DADOS.investimento_mensal||[];
-  if(!m.length){el('secMensal').style.display='none';return;}
+  /* So os meses tocados pelo filtro. Antes a tabela listava junho a
+     agosto mesmo com o filtro em agosto — o painel se contradizia. */
+  const m=(DADOS.investimento_mensal||[])
+    .filter(x=>x.mes>=FILTRO.de.slice(0,7)&&x.mes<=FILTRO.ate.slice(0,7));
+
+  /* Com um mes so, a tabela repetiria o numero que ja esta no topo. */
+  if(m.length<2){el('secMensal').style.display='none';return;}
   el('secMensal').style.display='';
 
   const g=DADOS.grupos_produto||{};
   const ordem=Object.values(g).sort((a,b)=>b.investimento-a.investimento).map(x=>x.id);
   const corDe=id=>corProduto(Math.max(0,ordem.indexOf(id)));
 
-  const p=DADOS.periodo_operacional;
-  el('mensalSub').textContent=p?`Recorte de ${diaCurto(p.de)} a ${diaCurto(p.ate)}`:'';
+  el('mensalSub').textContent=`De ${diaCurto(FILTRO.de)} a ${diaCurto(FILTRO.ate)}`;
 
   el('tblMensal').querySelector('tbody').innerHTML=m.map(x=>{
     const [ano,mes]=x.mes.split('-');
@@ -843,15 +847,44 @@ function renderMensal(){
    Duas verdades diferentes de proposito: o status e de AGORA (so entra
    quem esta no ar), o desempenho e do recorte operacional. Um criativo
    ligado ontem aparece com o gasto de ontem. */
+/* Recalcula cada criativo dentro do filtro, a partir da serie por dia.
+   Sem isso a secao mostrava sempre o mesmo recorte fixo, e o painel
+   dizia "agosto" no topo com numeros de junho a agosto nos cards. */
+function criativosNoFiltro(){
+  const base=DADOS.criativos_ativos||[];
+  const dias=DADOS.criativos_por_dia;
+  if(!dias) return base;
+
+  const acc=new Map();
+  for(const l of dias){
+    if(l.data<FILTRO.de||l.data>FILTRO.ate)continue;
+    const a=acc.get(l.ad_id)||{investimento:0,resultados:0};
+    a.investimento+=l.investimento;
+    a.resultados+=l.resultados;
+    acc.set(l.ad_id,a);
+  }
+
+  return base.map(x=>{
+    const a=acc.get(x.id);
+    const inv=a?Number(a.investimento.toFixed(2)):0;
+    const res=a?a.resultados:0;
+    return {...x,
+      investimento:inv,
+      resultados:res,
+      custo_por_resultado:res>0?Number((inv/res).toFixed(2)):null,
+      sem_dados_no_periodo:inv===0,
+    };
+  });
+}
+
 function renderCriativos(){
-  const c=DADOS.criativos_ativos||[];
+  const c=criativosNoFiltro();
   if(!c.length){el('secCriativos').style.display='none';return;}
   el('secCriativos').style.display='';
 
-  const p=DADOS.periodo_operacional;
   const comDados=c.filter(x=>!x.sem_dados_no_periodo);
   el('criatSub').textContent=
-    `${c.length} no ar · desempenho de ${p?diaCurto(p.de)+' a '+diaCurto(p.ate):'período'}`;
+    `${c.length} no ar · desempenho de ${diaCurto(FILTRO.de)} a ${diaCurto(FILTRO.ate)}`;
 
   /* O "melhor" e eleito DENTRO de cada campanha — e nela que a decisao
      acontece: os criativos disputam o mesmo orcamento, o mesmo publico e
@@ -1155,8 +1188,14 @@ function renderCampanhas(){
 
 function renderPublico(){
   const p=DADOS.publico?.idade_genero||[];
+  /* Unica secao que nao acompanha o filtro: a Meta entrega a quebra por
+     idade e genero agregada no periodo, sem serie diaria, entao nao ha
+     como recortar sem uma chamada por intervalo. Dizer a data real evita
+     que o numero seja lido como se fosse do mes filtrado. */
+  const d=DADOS.periodo_disponivel;
   el('pubSub').textContent=p.length
-    ?'Dados do período completo da conta — não muda com o filtro de datas acima':'Sem dados demográficos';
+    ? `Todo o período da conta (${diaCurto(d.de)}/${d.de.slice(0,4)} a ${diaCurto(d.ate)}) — esta seção não acompanha o filtro acima`
+    : 'Sem dados demográficos';
   CHARTS.pub?.destroy();
   if(!p.length) return;
   const faixas=[...new Set(p.map(x=>x.faixa))].sort();
