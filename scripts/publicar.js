@@ -231,6 +231,40 @@ function prepararBase(html) {
 }`
   );
 
+  // --- auto-refresh: no site publicado, releR o cofre nao traz nada ---
+  // No painel local o auto-refresh refaz o fetch do JSON e pega o arquivo
+  // que o .bat regravou. Aqui os dados estao cifrados DENTRO desta pagina:
+  // reler o cofre devolveria sempre os mesmos numeros e o rodape mentiria
+  // "verificado agora" sem nada ter sido verificado.
+  //
+  // O dado novo chega quando o GitHub Actions republica o HTML (de hora em
+  // hora). Entao o refresh aqui checa se o proprio arquivo mudou no
+  // servidor e, se mudou, recarrega a pagina inteira.
+  const reAtualizar = /async\s+function\s+atualizarDados\s*\(\s*\)\s*\{[\s\S]*?\n\}/;
+  if (reAtualizar.test(html)) {
+    html = html.replace(reAtualizar, `async function atualizarDados(){
+  /* Publicado: os dados vem cifrados nesta pagina. Reler o cofre nao
+     traria numero novo — a atualizacao chega quando a automacao
+     republica o HTML. Aqui so verificamos se isso ja aconteceu. */
+  try{
+    const r=await fetch(location.pathname,{method:'HEAD',cache:'no-store'});
+    const tag=r.headers.get('etag')||r.headers.get('last-modified');
+    if(tag && window.__tagPagina && tag!==window.__tagPagina){
+      location.reload();
+      return;
+    }
+    if(tag && !window.__tagPagina) window.__tagPagina=tag;
+    marcarAtualizacao(false);
+  }catch(e){
+    /* silencioso: sem rede, a pagina segue com os dados que ja tem */
+  }
+}`);
+  } else {
+    console.error('\nNao consegui localizar atualizarDados() no dashboard.html.');
+    console.error('O arquivo original mudou — ajuste o regex em scripts/publicar.js.\n');
+    process.exit(1);
+  }
+
   // --- noindex ---
   return html.replace('</head>',
     '<meta name="robots" content="noindex, nofollow">\n</head>');

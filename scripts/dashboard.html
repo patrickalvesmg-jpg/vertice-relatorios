@@ -132,6 +132,55 @@ tbody tr:hover{background:rgba(168,85,247,0.03);}
   .fn-fill{font-size:11.5px;padding:0 9px;}
 }
 .vazio{padding:44px 20px;text-align:center;font-size:12.5px;color:var(--text);line-height:1.8;font-weight:500;}
+
+/* ---- Produtos ---- */
+.prod-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px;}
+.prod{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:20px;}
+.prod-n{font-size:13px;font-weight:800;color:#fff;letter-spacing:-.2px;}
+.prod-d{font-size:10.5px;color:var(--text);font-weight:600;margin-top:4px;line-height:1.5;}
+.prod-inv{font-size:24px;font-weight:800;color:var(--lilac);margin-top:14px;letter-spacing:-.5px;}
+.prod-l{font-size:9.5px;color:var(--text);font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin-top:2px;}
+.prod-r{display:flex;gap:18px;margin-top:14px;padding-top:14px;border-top:1px solid var(--border);}
+.prod-rv{font-size:16px;font-weight:800;color:#fff;}
+.prod-rl{font-size:9.5px;color:var(--text);font-weight:600;margin-top:2px;line-height:1.3;}
+
+/* ---- Investimento mensal ---- */
+.mes-barra{display:flex;height:8px;border-radius:4px;overflow:hidden;background:rgba(255,255,255,0.05);min-width:160px;}
+.mes-seg{height:100%;}
+.mes-leg{display:flex;flex-wrap:wrap;gap:10px;margin-top:6px;}
+.mes-li{display:flex;align-items:center;gap:5px;font-size:9.5px;color:var(--text2);font-weight:600;}
+.mes-pt{width:7px;height:7px;border-radius:2px;}
+
+/* ---- Criativos ativos ---- */
+.criat-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(268px,1fr));gap:14px;margin-top:6px;}
+.criat{background:rgba(255,255,255,0.02);border:1px solid var(--border);border-radius:14px;overflow:hidden;
+  display:flex;flex-direction:column;transition:border-color .18s,transform .18s;}
+.criat:hover{border-color:var(--border2);transform:translateY(-2px);}
+.criat.top{border-color:rgba(74,222,128,0.4);}
+.criat-top{display:flex;gap:12px;padding:14px;}
+.criat-th{width:56px;height:56px;border-radius:9px;object-fit:cover;flex-shrink:0;background:rgba(255,255,255,0.05);}
+.criat-th-v{width:56px;height:56px;border-radius:9px;flex-shrink:0;background:rgba(168,85,247,0.12);
+  display:flex;align-items:center;justify-content:center;font-size:19px;}
+.criat-i{min-width:0;flex:1;}
+.criat-n{font-size:11.5px;font-weight:700;color:#fff;line-height:1.35;
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
+.criat-g{font-size:9.5px;color:var(--lilac);font-weight:700;margin-top:4px;
+  text-transform:uppercase;letter-spacing:.05em;}
+.criat-m{display:grid;grid-template-columns:1fr 1fr 1fr;gap:1px;background:var(--border);margin-top:auto;}
+.criat-mc{background:#100c2c;padding:10px 8px;text-align:center;}
+.criat-mv{font-size:13px;font-weight:800;color:#fff;}
+.criat-mv.dest{color:var(--green);}
+.criat-ml{font-size:8.5px;color:var(--text);font-weight:700;margin-top:2px;
+  text-transform:uppercase;letter-spacing:.04em;line-height:1.2;}
+.criat-a{display:block;padding:10px;text-align:center;font-size:10.5px;font-weight:800;
+  color:var(--light);background:rgba(107,33,232,0.18);text-decoration:none;
+  letter-spacing:.05em;text-transform:uppercase;transition:background .18s,color .18s;}
+.criat-a:hover{background:rgba(107,33,232,0.42);color:#fff;}
+.criat-a.off{color:var(--text);background:rgba(255,255,255,0.03);cursor:default;}
+.criat-tag{position:absolute;top:9px;right:9px;font-size:8.5px;font-weight:800;padding:3px 7px;
+  border-radius:5px;background:var(--green);color:#0B0920;letter-spacing:.05em;}
+.criat-w{position:relative;}
+.criat.sd{opacity:.55;}
 .foot{margin-top:44px;padding-top:22px;border-top:1px solid var(--border);
   display:flex;justify-content:space-between;gap:14px;flex-wrap:wrap;
   font-size:10.5px;font-weight:600;color:rgba(255,255,255,0.22);}
@@ -201,6 +250,41 @@ tbody tr:hover{background:rgba(168,85,247,0.03);}
       <div class="card-t">Investimento e resultados por dia</div>
       <div class="card-s" id="evoSub"></div>
       <div class="chart-box"><canvas id="chEvo"></canvas></div>
+    </div>
+
+    <!-- PRODUTOS -->
+    <!-- Cada produto entrega numa moeda diferente (conversa, compra,
+         clique). Ficam lado a lado, nunca somados: 1 compra + 1 lead
+         nao sao "2 resultados". -->
+    <div id="secProdutos" style="display:none;">
+      <div class="sec-t">Produtos</div>
+      <div class="prod-grid" id="prodGrid"></div>
+    </div>
+
+    <!-- INVESTIMENTO POR MES -->
+    <div id="secMensal" style="display:none;">
+      <div class="sec-t">Investimento por mês</div>
+      <div class="card">
+        <div class="card-t">Total da conta em cada mês</div>
+        <div class="card-s" id="mensalSub"></div>
+        <div class="tbl-wrap">
+          <table id="tblMensal">
+            <thead><tr><th>Mês</th><th class="num">Investimento</th><th>Distribuição por produto</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- CRIATIVOS ATIVOS -->
+    <div id="secCriativos" style="display:none;">
+      <div class="sec-t">Criativos no ar agora</div>
+      <div class="card">
+        <div class="card-t">Somente anúncios ativos neste momento</div>
+        <div class="card-s" id="criatSub"></div>
+        <div class="criat-grid" id="criatGrid"></div>
+        <div class="aviso" id="avisoCriat"></div>
+      </div>
     </div>
 
     <!-- CAMPANHAS -->
@@ -402,9 +486,60 @@ async function iniciar(){
 
     progresso(100,'PRONTO');
     setTimeout(()=>{el('loader').classList.add('hidden');el('dash').classList.add('on');},260);
+    iniciarAutoRefresh();
   }catch(e){
     falhar(`${e.message}<br><br>Confira se o arquivo existe na pasta <b>dados/</b> e se a página está sendo aberta por um servidor (não por duplo clique no arquivo).`);
   }
+}
+
+/* ---------- Atualizacao automatica ----------
+   O painel rele o JSON de tempos em tempos e redesenha sozinho. O dado
+   fica fresco enquanto o script agendado regrava o arquivo.
+
+   Nao e streaming: a propria Meta consolida gasto com atraso de horas.
+   Duas protecoes:
+     - so recarrega com a aba visivel (aba de fundo nao gasta rede a toa)
+     - preserva o filtro escolhido; recarregar nao pode puxar o usuario
+       de volta para "30 dias" enquanto ele olha outro recorte
+   Falha de rede aqui e silenciosa de proposito: a tela continua com o
+   ultimo dado bom em vez de virar erro. */
+const REFRESH_MS=5*60*1000;
+
+function iniciarAutoRefresh(){
+  setInterval(()=>{
+    if(document.hidden)return;
+    atualizarDados();
+  },REFRESH_MS);
+  document.addEventListener('visibilitychange',()=>{
+    if(!document.hidden)atualizarDados();
+  });
+}
+
+async function atualizarDados(){
+  try{
+    const cli=DADOS._cfg;
+    const novo=await carregarJSON(`${PASTA}/${cli.slug}.json`);
+    const antes=DADOS.periodo_disponivel?.atualizado_em;
+    novo._cfg=cli;
+    if(DADOS.funil)novo.funil=DADOS.funil;
+
+    const filtro={...FILTRO};
+    DADOS=novo;
+    prepararFiltro();
+    FILTRO=filtro;               // devolve o recorte que o usuario tinha
+    el('fDe').value=FILTRO.de; el('fAte').value=FILTRO.ate;
+    render();
+    marcarAtualizacao(antes!==novo.periodo_disponivel?.atualizado_em);
+  }catch(e){
+    console.warn('auto-refresh falhou, mantendo dados atuais:',e.message);
+  }
+}
+
+function marcarAtualizacao(mudou){
+  const f=el('fAtual');
+  if(!f)return;
+  const h=new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+  f.textContent=(mudou?'Dados novos às ':'Verificado às ')+h;
 }
 
 function montarSeletor(ativos,atual){
@@ -519,6 +654,144 @@ function render(){
   el('fInfo').textContent=info;
   renderKPIs(s); renderEvolucao(s);
   renderCampanhas(); renderPublico(); renderNegocio();
+  renderProdutos(); renderMensal(); renderCriativos();
+}
+
+/* ---------- Produtos ----------
+   Cada grupo tem a sua propria moeda de resultado. Ficam lado a lado e
+   NUNCA somados — juntar compra com lead numa coluna so nao significa nada.
+   Esta secao ignora o filtro de periodo: vem do recorte operacional
+   (ultimos 2 meses) gravado pelo gerador. */
+const CORES_PROD=['#A855F7','#4ade80','#38bdf8','#facc15','#f87171'];
+
+function corProduto(i){return CORES_PROD[i%CORES_PROD.length];}
+
+function renderProdutos(){
+  const g=DADOS.grupos_produto||{};
+  const lista=Object.values(g).sort((a,b)=>b.investimento-a.investimento);
+  if(!lista.length){el('secProdutos').style.display='none';return;}
+  el('secProdutos').style.display='';
+
+  el('prodGrid').innerHTML=lista.map((p,i)=>{
+    const cor=corProduto(i);
+    const sec=p.secundario!==null&&p.rotulo_secundario
+      ? `<div><div class="prod-rv">${num(p.secundario)}</div>
+           <div class="prod-rl">${p.rotulo_secundario}</div></div>` : '';
+    return `<div class="prod" style="border-left:3px solid ${cor}">
+      <div class="prod-n">${p.nome}</div>
+      <div class="prod-d">${p.descricao||''}</div>
+      <div class="prod-inv" style="color:${cor}">${brl(p.investimento)}</div>
+      <div class="prod-l">Investido</div>
+      <div class="prod-r">
+        <div><div class="prod-rv">${num(p.resultados)}</div>
+          <div class="prod-rl">${p.rotulo_resultado}</div></div>
+        <div><div class="prod-rv">${p.custo_por_resultado?brl(p.custo_por_resultado):'—'}</div>
+          <div class="prod-rl">Custo unitário</div></div>
+        ${sec}
+      </div></div>`;
+  }).join('');
+}
+
+/* ---------- Investimento por mes ---------- */
+function renderMensal(){
+  const m=DADOS.investimento_mensal||[];
+  if(!m.length){el('secMensal').style.display='none';return;}
+  el('secMensal').style.display='';
+
+  const g=DADOS.grupos_produto||{};
+  const ordem=Object.values(g).sort((a,b)=>b.investimento-a.investimento).map(x=>x.id);
+  const corDe=id=>corProduto(Math.max(0,ordem.indexOf(id)));
+
+  const p=DADOS.periodo_operacional;
+  el('mensalSub').textContent=p?`Recorte de ${diaCurto(p.de)} a ${diaCurto(p.ate)}`:'';
+
+  el('tblMensal').querySelector('tbody').innerHTML=m.map(x=>{
+    const [ano,mes]=x.mes.split('-');
+    const nm=['','janeiro','fevereiro','março','abril','maio','junho','julho',
+      'agosto','setembro','outubro','novembro','dezembro'][Number(mes)];
+    const partes=Object.entries(x.grupos)
+      .filter(([,v])=>v.investimento>0)
+      .sort((a,b)=>b[1].investimento-a[1].investimento);
+    const barra=partes.map(([id,v])=>
+      `<div class="mes-seg" style="width:${(v.investimento/x.investimento*100).toFixed(1)}%;
+        background:${corDe(id)}" title="${g[id]?g[id].nome:id}: ${brl(v.investimento)}"></div>`).join('');
+    const leg=partes.map(([id,v])=>
+      `<span class="mes-li"><span class="mes-pt" style="background:${corDe(id)}"></span>
+        ${g[id]?g[id].nome:id} · ${brl(v.investimento)}</span>`).join('');
+    return `<tr>
+      <td class="nome">${nm} de ${ano}</td>
+      <td class="num">${brl(x.investimento)}</td>
+      <td><div class="mes-barra">${barra}</div><div class="mes-leg">${leg}</div></td>
+    </tr>`;
+  }).join('');
+}
+
+/* ---------- Criativos ativos ----------
+   Duas verdades diferentes de proposito: o status e de AGORA (so entra
+   quem esta no ar), o desempenho e do recorte operacional. Um criativo
+   ligado ontem aparece com o gasto de ontem. */
+function renderCriativos(){
+  const c=DADOS.criativos_ativos||[];
+  if(!c.length){el('secCriativos').style.display='none';return;}
+  el('secCriativos').style.display='';
+
+  const p=DADOS.periodo_operacional;
+  const comDados=c.filter(x=>!x.sem_dados_no_periodo);
+  el('criatSub').textContent=
+    `${c.length} no ar · desempenho de ${p?diaCurto(p.de)+' a '+diaCurto(p.ate):'período'}`;
+
+  /* "melhor" so tem sentido dentro do mesmo produto: comparar custo por
+     conversa com custo por compra seria comparar moedas diferentes.
+
+     E so vale com volume. Um criativo que gastou R$ 0,44 e trouxe 5
+     cliques da um custo unitario otimo por acidente estatistico — premiar
+     isso mandaria escalar o criativo errado. Por isso o selo exige pelo
+     menos 10% do investimento do grupo e 10 resultados. */
+  const invPorGrupo={};
+  for(const x of comDados) invPorGrupo[x.grupo]=(invPorGrupo[x.grupo]||0)+x.investimento;
+
+  const MIN_RES=10, MIN_FATIA=0.10;
+  const elegivel=x=>x.custo_por_resultado!==null
+    && x.resultados>=MIN_RES
+    && x.investimento>=(invPorGrupo[x.grupo]||0)*MIN_FATIA;
+
+  const melhorPorGrupo={};
+  for(const x of comDados){
+    if(!elegivel(x))continue;
+    const at=melhorPorGrupo[x.grupo];
+    if(at===undefined||x.custo_por_resultado<at)melhorPorGrupo[x.grupo]=x.custo_por_resultado;
+  }
+
+  el('criatGrid').innerHTML=c.map(x=>{
+    const top=!x.sem_dados_no_periodo&&elegivel(x)
+      &&melhorPorGrupo[x.grupo]===x.custo_por_resultado;
+    const th=x.miniatura
+      ? `<img class="criat-th" src="${x.miniatura}" alt="" onerror="this.outerHTML='<div class=\\'criat-th-v\\'>▶</div>'">`
+      : `<div class="criat-th-v">▶</div>`;
+    const link=x.link
+      ? `<a class="criat-a" href="${x.link}" target="_blank" rel="noopener">Abrir criativo ↗</a>`
+      : `<span class="criat-a off">Sem link de preview</span>`;
+    const cpr=x.sem_dados_no_periodo?'—':(x.custo_por_resultado?brl(x.custo_por_resultado):'—');
+    return `<div class="criat-w"><div class="criat ${top?'top':''} ${x.sem_dados_no_periodo?'sd':''}">
+      ${top?'<span class="criat-tag">MELHOR</span>':''}
+      <div class="criat-top">${th}
+        <div class="criat-i"><div class="criat-n">${x.nome}</div>
+          <div class="criat-g">${x.grupo_nome}</div></div></div>
+      <div class="criat-m">
+        <div class="criat-mc"><div class="criat-mv">${brl(x.investimento)}</div>
+          <div class="criat-ml">Investido</div></div>
+        <div class="criat-mc"><div class="criat-mv">${num(x.resultados)}</div>
+          <div class="criat-ml">${x.rotulo_resultado}</div></div>
+        <div class="criat-mc"><div class="criat-mv ${top?'dest':''}">${cpr}</div>
+          <div class="criat-ml">Custo un.</div></div>
+      </div>${link}</div></div>`;
+  }).join('');
+
+  const sd=c.length-comDados.length;
+  el('avisoCriat').textContent=
+    'Só aparecem os criativos ativos neste momento — um anúncio pausado sai da lista, mesmo que tenha gasto no período. '
+    +`O selo "melhor" compara o custo dentro do mesmo produto, nunca entre produtos diferentes, e só considera criativos com pelo menos ${MIN_RES} resultados e 10% do investimento do produto — um criativo com gasto muito baixo pode ter custo unitário ótimo por acaso.`
+    +(sd?` ${sd} criativo(s) ativo(s) ainda sem entrega no período aparecem esmaecidos.`:'');
 }
 
 function renderKPIs(s){
@@ -625,11 +898,21 @@ function renderCampanhas(){
     el('avisoCamp').textContent=''; return;
   }
   const f=periodoInteiro()?1:fatiaPeriodo();
+  /* Cada campanha traz o proprio rotulo de resultado (conversa, compra,
+     lead...). Sem isso, o cabecalho unico "Resultados" fazia a campanha
+     de formulario parecer fraca: mostrava compras onde havia leads. */
+  const misto=new Set(comGasto.map(x=>x.rotulo_resultado||rotulo())).size>1;
+  el('thCampRes').textContent=misto?'Resultado':rotulo();
+
   tb.innerHTML=[...comGasto].sort((a,b)=>b.investimento-a.investimento).map(x=>{
     const inv=x.investimento*f, res=Math.round(x.resultados*f);
+    const rot=x.rotulo_resultado||rotulo();
+    const cel=misto
+      ? `${num(res)} <span style="color:var(--text);font-size:10px;font-weight:600">${rot.toLowerCase()}</span>`
+      : num(res);
     return `<tr>
       <td class="nome">${x.nome}</td>
-      <td class="num">${brl(inv)}</td><td class="num">${num(res)}</td>
+      <td class="num">${brl(inv)}</td><td class="num">${cel}</td>
       <td class="num">${res?brl(inv/res):'—'}</td></tr>`;
   }).join('');
   el('avisoCamp').textContent=periodoInteiro()?''
