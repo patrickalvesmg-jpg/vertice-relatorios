@@ -16,6 +16,14 @@
 // tela, mas dados/cliente.json continuaria baixavel. Criptografado dentro do
 // HTML, sem a senha nao existe nada legivel para baixar.
 
+// Favicon da marca, usado nas duas paginas geradas.
+const ICONES = [
+  "<link rel=\"icon\" type=\"image/png\" sizes=\"32x32\" href=\"/img/favicon-32.png\">",
+  "<link rel=\"icon\" type=\"image/png\" sizes=\"16x16\" href=\"/img/favicon-16.png\">",
+  "<link rel=\"apple-touch-icon\" sizes=\"180x180\" href=\"/img/apple-touch-icon.png\">",
+  "<meta name=\"theme-color\" content=\"#6B21E8\">",
+].join('\n');
+
 const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
@@ -282,7 +290,7 @@ function prepararBase(html) {
 
   // --- noindex ---
   return html.replace('</head>',
-    '<meta name="robots" content="noindex, nofollow">\n</head>');
+    '<meta name="robots" content="noindex, nofollow">\n' + ICONES + '\n</head>');
 }
 
 // Pagina de indice: lista os clientes publicados. Sem dado nenhum.
@@ -301,6 +309,7 @@ function paginaIndice(ativos) {
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="robots" content="noindex, nofollow">
 <title>Relatórios — Vértice Assessoria</title>
+${ICONES}
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
