@@ -160,10 +160,31 @@ document.getElementById('fSenha').addEventListener('submit', async (e) => {
 
 /* Já autenticado nesta aba: entra direto. */
 (async () => {
-  const s = sessionStorage.getItem('vertice_s');
+  /* A senha pode vir de tres lugares, nesta ordem:
+     1. o hash da URL (#k=...) — e como o sistema interno da Vertice abre
+        o relatorio ja destravado, sem o Patrick digitar de novo;
+     2. a sessao, de um acesso anterior nesta aba;
+     3. o formulario.
+
+     O hash e usado, e nao um parametro ?senha=, porque o que vem depois
+     do # NAO e enviado ao servidor: nao entra em log de acesso nem no
+     cabecalho Referer ao clicar num link de saida. Ele tambem e apagado
+     da barra de enderecos assim que lido, para nao ficar no historico
+     nem ser copiado junto se o cliente compartilhar o endereco. */
+  let s = null, veioDoLink = false;
+
+  const m = location.hash.match(/[#&]k=([^&]+)/);
+  if(m){
+    try{ s = decodeURIComponent(escape(atob(decodeURIComponent(m[1])))); veioDoLink = true; }
+    catch(e){ s = null; }
+    history.replaceState(null, '', location.pathname + location.search);
+  }
+  if(!s) s = sessionStorage.getItem('vertice_s');
   if(!s) return;
+
   try{
     COFRE = await abrir(s);
+    if(veioDoLink) sessionStorage.setItem('vertice_s', s);
     document.getElementById('portao').remove();
     iniciar();
   }catch(e){ sessionStorage.removeItem('vertice_s'); }
