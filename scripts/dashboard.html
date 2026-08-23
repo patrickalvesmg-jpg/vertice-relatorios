@@ -220,6 +220,62 @@ td.sub{padding-left:26px;}
   .kpi-v{font-size:26px;} .kpi.hero .kpi-v{font-size:29px;}
   .chart-box{height:250px;}
 }
+
+/* ---------- celular ----------
+   Abaixo de 620px as tabelas deixam de ser tabela: cada linha vira um
+   cartao com rotulo ao lado do numero. Rolar de lado para ler quatro
+   colunas e o que mais incomoda quem abre o relatorio no telefone. */
+@media(max-width:620px){
+  .tbl-wrap{overflow-x:visible;}
+  table{min-width:0;display:block;}
+  thead{display:none;}
+  tbody,tr,td{display:block;width:auto;}
+
+  tbody tr{background:rgba(255,255,255,0.025);border:1px solid var(--border);
+    border-radius:13px;padding:13px 15px;margin-bottom:10px;}
+  tbody tr:last-child{margin-bottom:0;}
+  tbody td{border:0;padding:0;}
+
+  /* nome da campanha vira o titulo do cartao */
+  tbody td.nome{font-size:14px;font-weight:800;color:#fff;
+    padding-bottom:10px;margin-bottom:10px;
+    border-bottom:1px solid rgba(255,255,255,0.07);line-height:1.35;}
+  tbody td.nome.sub{padding-left:0;}
+  tbody td.nome.sub::before{content:'↳ ';color:var(--lilac);}
+
+  /* cada numero ganha o rotulo que estava no cabecalho */
+  tbody td[data-r]{display:flex;align-items:baseline;justify-content:space-between;
+    gap:12px;padding:6px 0;text-align:left;font-size:14px;font-weight:700;}
+  tbody td[data-r]::before{content:attr(data-r);font-size:11px;font-weight:700;
+    color:var(--text);text-transform:uppercase;letter-spacing:.06em;flex-shrink:0;}
+  tbody td.num{text-align:right;}
+
+  /* a distribuicao por produto ocupa a largura toda, sem o rotulo na frente */
+  tbody td[data-r="Distribuição"]{display:block;padding-top:10px;}
+  tbody td[data-r="Distribuição"]::before{display:block;margin-bottom:7px;}
+
+  /* linha de grupo (produto) continua sendo um cabecalho, nao um cartao */
+  tbody tr.grp{background:none;border:0;border-radius:0;padding:14px 2px 6px;
+    margin:0;}
+  tbody tr.grp td{font-size:11px;font-weight:800;letter-spacing:.08em;
+    text-transform:uppercase;color:var(--lilac);}
+  tbody tr.grp td::before{display:none;}
+
+  /* alvos de toque: o minimo confortavel com o polegar e 44px */
+  .f-btn{min-height:44px;padding:0 16px;font-size:13px;}
+  .f-date{min-height:44px;font-size:14px;padding:0 12px;}
+  .criat-a{min-height:44px;display:flex;align-items:center;justify-content:center;
+    font-size:12.5px;}
+
+  /* textos que ficavam pequenos demais para ler no telefone */
+  .card-t{font-size:14px;}
+  .card-s{font-size:12px;}
+  .kpi-l{font-size:11px;}
+  .kpi-f{font-size:12px;}
+  .sec-t{font-size:12px;}
+  .mes-li{font-size:11.5px;}
+  .rod{font-size:11px;}
+}
 </style>
 </head>
 <body>
@@ -840,8 +896,9 @@ function renderMensal(){
         ${g[id]?g[id].nome:id} · ${brl(v.investimento)}</span>`).join('');
     return `<tr>
       <td class="nome">${nm} de ${ano}</td>
-      <td class="num">${brl(x.investimento)}</td>
-      <td><div class="mes-barra">${barra}</div><div class="mes-leg">${leg}</div></td>
+      <td class="num" data-r="Investimento">${brl(x.investimento)}</td>
+      <td data-r="Distribuição"><div class="mes-barra">${barra}</div>
+        <div class="mes-leg">${leg}</div></td>
     </tr>`;
   }).join('');
 }
@@ -1202,8 +1259,9 @@ function renderCampanhas(){
       : num(res);
     return `<tr>
       <td class="nome${sub?' sub':''}">${x.nome}</td>
-      <td class="num">${brl(inv)}</td><td class="num">${cel}</td>
-      <td class="num">${res?brl(inv/res):'—'}</td></tr>`;
+      <td class="num" data-r="Investimento">${brl(inv)}</td>
+      <td class="num" data-r="${misto?'Resultado':rotulo()}">${cel}</td>
+      <td class="num" data-r="Custo por resultado">${res?brl(inv/res):'—'}</td></tr>`;
   };
 
   /* Com produtos definidos, as campanhas ficam agrupadas por produto:
