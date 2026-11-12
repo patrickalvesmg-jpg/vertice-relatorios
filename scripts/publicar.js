@@ -204,16 +204,18 @@ document.getElementById('fSenha').addEventListener('submit', async (e) => {
 
      O hash e usado, e nao um parametro ?senha=, porque o que vem depois
      do # NAO e enviado ao servidor: nao entra em log de acesso nem no
-     cabecalho Referer ao clicar num link de saida. Ele tambem e apagado
-     da barra de enderecos assim que lido, para nao ficar no historico
-     nem ser copiado junto se o cliente compartilhar o endereco. */
+     cabecalho Referer ao clicar num link de saida.
+
+     Desde 12/11/2026 o hash FICA na barra de enderecos (antes era
+     apagado assim que lido). O cliente recebe o link de acesso em vez de
+     senha, e apagar o hash fazia o Patrick copiar da barra um endereco
+     que pedia senha. O link e a chave: quem o tiver, entra. */
   let s = null, veioDoLink = false;
 
   const m = location.hash.match(/[#&]k=([^&]+)/);
   if(m){
     try{ s = decodeURIComponent(escape(atob(decodeURIComponent(m[1])))); veioDoLink = true; }
     catch(e){ s = null; }
-    history.replaceState(null, '', location.pathname + location.search);
   }
   if(!s) s = sessionStorage.getItem('vertice_s');
   if(!s) return;
