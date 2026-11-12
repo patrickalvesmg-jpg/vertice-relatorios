@@ -215,8 +215,14 @@ td.sub{padding-left:26px;}
 .fv-barra{height:10px;border-radius:5px;background:rgba(255,255,255,0.05);overflow:hidden;}
 .fv-fill{height:100%;border-radius:5px;background:var(--lilac);}
 .fv-num{font-size:18px;font-weight:800;text-align:right;}
-.fv-taxa{font-size:11px;font-weight:600;color:var(--text2);}
-.fv-taxa b{color:#fff;}
+.fv-taxa{font-size:11px;font-weight:600;color:var(--text);}
+.fv-taxa b{color:var(--light);font-size:15px;font-weight:800;margin-right:3px;}
+.fv-h{display:flex;justify-content:space-between;align-items:flex-start;gap:14px;margin-bottom:8px;}
+.fv-h .card-s{margin-bottom:0;}
+.fv-total{display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:12px;flex-shrink:0;
+  background:rgba(168,85,247,0.10);border:1px solid rgba(168,85,247,0.3);}
+.fv-total b{font-size:24px;font-weight:800;color:var(--light);}
+.fv-total span{font-size:10.5px;font-weight:700;color:var(--text2);line-height:1.3;}
 .pj-card{margin-bottom:16px;}
 .pj-entrada{display:flex;align-items:flex-end;gap:14px;flex-wrap:wrap;margin:6px 0 16px;}
 .pj-entrada label{display:block;width:100%;font-size:11px;font-weight:700;color:var(--text2);margin-bottom:-6px;}
@@ -372,6 +378,7 @@ td.sub{padding-left:26px;}
   .kpi{padding:16px 14px;}
   .kpi-d{font-size:10.5px;}
   .hdr-r .bt-anotar{padding:9px 12px;font-size:12px;}
+  .fv-h{flex-direction:column;}
   .fv-linha{grid-template-columns:1fr auto;gap:6px 12px;}
   .fv-nome{grid-column:1;} .fv-num{grid-column:2;grid-row:1;}
   .fv-barra{grid-column:1/-1;} .fv-taxa{grid-column:1/-1;}
@@ -493,7 +500,7 @@ td.sub{padding-left:26px;}
         <dt>Custo de cada conversa</dt><dd>O valor investido dividido pelo número de conversas. Ex.: R$ 100 investidos e 20 conversas = R$ 5 cada conversa.</dd>
         <dt>Custo para conquistar cada cliente</dt><dd>O valor investido dividido pelos contratos fechados. É quanto o anúncio custou para trazer cada cliente novo.</dd>
         <dt>Retorno do anúncio</dt><dd>Quanto voltou em contratos para cada R$ 1,00 colocado em anúncio. Ex.: R$ 8,00 quer dizer que cada real investido virou oito em contrato.</dd>
-        <dt>De cada 100 que chamaram</dt><dd>De cada 100 pessoas que mandaram mensagem, quantas chegaram àquela etapa (reunião, proposta, contrato).</dd>
+        <dt>Taxa de conversão</dt><dd>Quantos % de uma etapa passaram para a seguinte. Ex.: 50% das propostas viraram contrato = de cada 2 propostas, 1 fechou.</dd>
         <dt>▲ ▼</dt><dd>Se o número subiu ou caiu em relação ao mesmo número de dias logo antes. Verde é bom, vermelho é atenção.</dd>
       </dl>
     </details>
@@ -1378,7 +1385,6 @@ function numerosDeVenda(){
   return t;
 }
 
-const deCada100=(parte,todo)=>todo?Math.round(parte/todo*100):0;
 
 function renderVendas(){
   const sec=el('secVendas');
@@ -1435,29 +1441,46 @@ function cartoesDinheiro(t){
   return `<div class="kpis vendas-kpis">${c.join('')}</div>`;
 }
 
+/* Taxa de conversao em %: 1 casa decimal abaixo de 10% (2,1%), inteira
+   acima (67%). Sem base, "—". */
+function pct(parte,todo){
+  if(!todo) return '—';
+  const v=parte/todo*100;
+  return (v<10?v.toFixed(1):Math.round(v).toString()).replace('.',',')+'%';
+}
+
+/* O caminho de quem chamou ate fechar, com a taxa de conversao de cada
+   etapa (quantos % da etapa anterior passaram para esta) e a conversao
+   total de mensagem para contrato em destaque. Pedido do Patrick
+   (12/11/2026): taxa em %, pouco texto. */
+const BASE_TAXA={reunioes_agendadas:'das mensagens',reunioes_feitas:'das agendadas',
+  propostas:'das reuniões feitas',contratos:'das propostas'};
+
 function cartaoFunil(t){
   const topo=t.mensagens||0;
   let origem='';
-  if(t.msgAnotadas&&t.msgGerenciador) origem=`${num(t.msgAnotadas)} anotadas por vocês + ${num(t.msgGerenciador)} do Gerenciador (dias sem anotação)`;
-  else if(t.msgGerenciador) origem='número do Gerenciador de Anúncios — anote as mensagens para ficar mais preciso';
-  else if(t.msgAnotadas) origem='anotadas por vocês';
+  if(t.msgAnotadas&&t.msgGerenciador) origem=`${num(t.msgAnotadas)} anotadas + ${num(t.msgGerenciador)} do Gerenciador`;
+  else if(t.msgGerenciador) origem='do Gerenciador (sem anotação)';
 
   const linhas=ETAPAS_VENDA.map((e,i)=>{
     const v=t[e.k]||0;
+    const ant=i?(t[ETAPAS_VENDA[i-1].k]||0):0;
     const larg=topo?Math.max(v?3:0,Math.min(100,v/topo*100)):0;
-    const taxa=i===0?'':(topo?`<b>${deCada100(v,topo)}</b> de cada 100 que chamaram`:'');
     return `<div class="fv-linha">
-      <div class="fv-nome">${e.nome}<small>${i===0&&origem?origem:e.ajuda}</small></div>
+      <div class="fv-nome">${e.nome}${i===0&&origem?`<small>${origem}</small>`:''}</div>
       <div class="fv-barra"><div class="fv-fill" style="width:${larg}%"></div></div>
       <div class="fv-num">${num(v)}</div>
-      <div class="fv-taxa">${taxa}</div>
+      <div class="fv-taxa">${i?`<b>${pct(v,ant)}</b> ${BASE_TAXA[e.k]}`:''}</div>
     </div>`;
   }).join('');
 
   const custoMsg=t.mensagens&&t.investimento?brl(t.investimento/t.mensagens):null;
   return `<div class="card fv-card">
-    <div class="card-t">O caminho de quem chamou até fechar</div>
-    <div class="card-s">${custoMsg?`Cada mensagem custou ${custoMsg} em anúncio. `:''}De cada 100 pessoas que chamaram, ${deCada100(t.contratos,topo)} fecharam contrato.</div>
+    <div class="fv-h">
+      <div><div class="card-t">Taxa de conversão: da mensagem ao contrato</div>
+        ${custoMsg?`<div class="card-s">Cada mensagem custou ${custoMsg} em anúncio</div>`:''}</div>
+      <div class="fv-total"><b>${pct(t.contratos,topo)}</b><span>das mensagens<br>viraram contrato</span></div>
+    </div>
     ${linhas}
   </div>`;
 }
