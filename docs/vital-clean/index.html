@@ -5,6 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Dashboard de Tráfego — Vértice Assessoria</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<!-- confete ao anotar contrato fechado (biblioteca de referencia do Patrick) -->
+<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.4/dist/confetti.browser.min.js" defer></script>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 <style>
 :root{
@@ -178,6 +180,7 @@ td.sub{padding-left:26px;}
 .tipo-g>div:first-child .tipo-v{color:var(--light);}
 .tipo-l{font-size:10.5px;font-weight:600;color:var(--text);margin-top:4px;line-height:1.35;}
 .tipo .kpi-d{margin-top:7px;}
+.tipo-x{font-size:11px;font-weight:500;color:var(--text2);line-height:1.45;margin-top:-2px;}
 .tipo-f{font-size:11px;font-weight:600;color:var(--text2);padding-top:11px;border-top:1px solid var(--border);}
 
 /* escolha do tipo no grafico */
@@ -188,6 +191,105 @@ td.sub{padding-left:26px;}
 .chip:hover{color:#fff;border-color:var(--border2);}
 .chip.on{background:rgba(168,85,247,0.22);border-color:transparent;color:#fff;}
 .chip:focus-visible{outline:2px solid var(--lilac);outline-offset:1px;}
+
+/* ---- Do WhatsApp ao contrato (registro diario) ---- */
+.hdr-r{display:flex;align-items:center;gap:10px;}
+.bt-anotar{padding:10px 16px;border:0;border-radius:10px;cursor:pointer;white-space:nowrap;
+  background:linear-gradient(135deg,var(--purple),var(--lilac));color:#fff;
+  font-family:'Montserrat',sans-serif;font-size:12.5px;font-weight:800;letter-spacing:.02em;}
+.bt-anotar:hover{filter:brightness(1.08);}
+.bt-anotar:focus-visible{outline:2px solid #fff;outline-offset:2px;}
+.vendas-h{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:-4px 0 14px;flex-wrap:wrap;}
+.vendas-h .card-s{margin:0;}
+.vendas-kpis{margin-bottom:16px;}
+.vendas-vazio{padding:28px;}
+.vv-t{font-size:16px;font-weight:800;margin-bottom:10px;}
+.vv-s{font-size:13px;line-height:1.65;color:var(--text2);font-weight:500;margin-top:6px;max-width:680px;}
+.vv-s b{color:#fff;}
+.fv-card{margin-bottom:16px;}
+.fv-linha{display:grid;grid-template-columns:minmax(150px,230px) 1fr 64px 170px;align-items:center;gap:14px;padding:10px 0;
+  border-bottom:1px solid rgba(255,255,255,0.04);}
+.fv-linha:last-child{border-bottom:0;}
+.fv-nome{font-size:13px;font-weight:700;}
+.fv-nome small{display:block;font-size:10.5px;font-weight:600;color:var(--text);margin-top:2px;line-height:1.35;}
+.fv-barra{height:10px;border-radius:5px;background:rgba(255,255,255,0.05);overflow:hidden;}
+.fv-fill{height:100%;border-radius:5px;background:var(--lilac);}
+.fv-num{font-size:18px;font-weight:800;text-align:right;}
+.fv-taxa{font-size:11px;font-weight:600;color:var(--text2);}
+.fv-taxa b{color:#fff;}
+.pj-card{margin-bottom:16px;}
+.pj-entrada{display:flex;align-items:flex-end;gap:14px;flex-wrap:wrap;margin:6px 0 16px;}
+.pj-entrada label{display:block;width:100%;font-size:11px;font-weight:700;color:var(--text2);margin-bottom:-6px;}
+.pj-campo{display:flex;align-items:center;gap:8px;padding:0 14px;border-radius:12px;
+  background:rgba(255,255,255,0.04);border:1px solid var(--border2);}
+.pj-campo span{font-weight:800;color:var(--text2);}
+.pj-campo input{width:150px;padding:12px 0;background:none;border:0;outline:none;color:#fff;
+  font-family:'Montserrat',sans-serif;font-size:20px;font-weight:800;}
+.pj-atalhos{display:flex;gap:6px;flex-wrap:wrap;}
+.pj-saida{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px;}
+.pj-l{background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:12px;padding:12px 14px;}
+.pj-l span{display:block;font-size:10.5px;font-weight:700;color:var(--text);text-transform:uppercase;letter-spacing:.06em;}
+.pj-l b{display:block;font-size:17px;font-weight:800;margin-top:6px;}
+.pj-l.pj-dest{border-color:rgba(168,85,247,0.45);background:rgba(168,85,247,0.07);}
+.pj-l.pj-dest b{color:var(--light);}
+.pj-nota{grid-column:1/-1;font-size:11px;color:var(--text2);font-weight:600;}
+
+/* formulario */
+.rg-fundo{position:fixed;inset:0;z-index:300;background:rgba(5,4,16,0.72);display:flex;
+  align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(4px);}
+.rg-fundo[hidden]{display:none;}
+.rg-caixa{width:100%;max-width:460px;max-height:92vh;overflow:auto;background:#130F33;
+  border:1px solid var(--border2);border-radius:20px;padding:20px 20px 22px;}
+.rg-topo{display:flex;align-items:center;justify-content:space-between;}
+.rg-titulo{font-size:17px;font-weight:800;}
+.rg-x{width:40px;height:40px;border:0;border-radius:10px;background:rgba(255,255,255,0.06);color:#fff;
+  font-size:22px;cursor:pointer;}
+.rg-dia{display:flex;align-items:center;gap:10px;margin:14px 0 6px;}
+.rg-seta{width:44px;height:44px;flex-shrink:0;border-radius:12px;border:1px solid var(--border2);
+  background:rgba(255,255,255,0.04);color:#fff;font-size:22px;cursor:pointer;}
+.rg-seta:disabled{opacity:.3;cursor:default;}
+.rg-dia-c{flex:1;text-align:center;}
+.rg-dia-t{font-size:14px;font-weight:800;}
+.rg-data{margin-top:4px;padding:4px 8px;border-radius:8px;border:1px solid rgba(168,85,247,0.18);
+  background:none;color:var(--text2);font-family:'Montserrat',sans-serif;font-size:11px;color-scheme:dark;}
+.rg-aviso{font-size:11.5px;font-weight:700;color:var(--yellow);text-align:center;min-height:16px;margin-bottom:6px;}
+.rg-campo{padding:12px 0;border-top:1px solid rgba(255,255,255,0.06);}
+.rg-campo label{display:block;font-size:13.5px;font-weight:800;}
+.rg-ajuda{font-size:11px;font-weight:500;color:var(--text2);margin:3px 0 9px;line-height:1.45;}
+.rg-passo{display:flex;align-items:center;gap:10px;}
+.rg-b{width:52px;height:52px;flex-shrink:0;border-radius:14px;border:1px solid var(--border2);
+  background:rgba(168,85,247,0.10);color:#fff;font-size:26px;font-weight:700;cursor:pointer;}
+.rg-b:active{background:rgba(168,85,247,0.3);}
+.rg-passo input,.rg-dinheiro input{flex:1;min-width:0;height:52px;text-align:center;border-radius:14px;
+  border:1px solid rgba(168,85,247,0.25);background:rgba(255,255,255,0.04);color:#fff;outline:none;
+  font-family:'Montserrat',sans-serif;font-size:24px;font-weight:800;}
+.rg-passo input::placeholder{font-size:14px;font-weight:600;color:var(--text);}
+.rg-passo input:focus,.rg-dinheiro input:focus{border-color:var(--lilac);}
+#rgCampoValor{display:none;}
+#rgCampoValor.on{display:block;}
+.rg-dinheiro{display:flex;align-items:center;gap:10px;}
+.rg-dinheiro span{font-size:18px;font-weight:800;color:var(--text2);}
+.rg-dinheiro input{text-align:left;padding:0 14px;}
+.rg-msg{font-size:12px;font-weight:700;min-height:18px;margin:10px 0 4px;}
+.rg-msg.erro{color:var(--red);}
+.rg-salvar{width:100%;height:54px;border:0;border-radius:14px;cursor:pointer;margin-top:4px;
+  background:linear-gradient(135deg,var(--purple),var(--lilac));color:#fff;
+  font-family:'Montserrat',sans-serif;font-size:15px;font-weight:800;}
+.rg-salvar:disabled{opacity:.6;cursor:default;}
+.toast{position:fixed;left:50%;bottom:24px;transform:translate(-50%,30px);opacity:0;z-index:400;
+  background:#15803d;color:#fff;font-size:13px;font-weight:800;padding:12px 18px;border-radius:12px;
+  transition:all .25s;pointer-events:none;}
+.toast.on{opacity:1;transform:translate(-50%,0);}
+
+/* glossario */
+.glossario{margin-top:22px;background:var(--card);border:1px solid var(--border);border-radius:14px;padding:14px 18px;}
+.glossario summary{cursor:pointer;font-size:12.5px;font-weight:700;color:var(--light);list-style:none;}
+.glossario summary::-webkit-details-marker{display:none;}
+.glossario summary::before{content:'? ';display:inline-block;width:20px;height:20px;line-height:20px;
+  text-align:center;border-radius:50%;background:rgba(168,85,247,0.2);margin-right:8px;font-weight:800;}
+.glossario dl{margin-top:12px;display:grid;grid-template-columns:minmax(160px,240px) 1fr;gap:10px 18px;}
+.glossario dt{font-size:12px;font-weight:800;}
+.glossario dd{font-size:12px;font-weight:500;color:var(--text2);line-height:1.55;}
 
 /* ---- Evolucao ---- */
 .evo-h{display:flex;justify-content:space-between;align-items:flex-start;gap:14px;flex-wrap:wrap;margin-bottom:6px;}
@@ -269,6 +371,15 @@ td.sub{padding-left:26px;}
   .kpi-v,.kpi.hero .kpi-v{font-size:22px;letter-spacing:-.4px;}
   .kpi{padding:16px 14px;}
   .kpi-d{font-size:10.5px;}
+  .hdr-r .bt-anotar{padding:9px 12px;font-size:12px;}
+  .fv-linha{grid-template-columns:1fr auto;gap:6px 12px;}
+  .fv-nome{grid-column:1;} .fv-num{grid-column:2;grid-row:1;}
+  .fv-barra{grid-column:1/-1;} .fv-taxa{grid-column:1/-1;}
+  .pj-campo input{width:120px;font-size:18px;}
+  .glossario dl{grid-template-columns:1fr;gap:4px;}
+  .glossario dd{margin-bottom:8px;}
+  .rg-fundo{align-items:flex-end;padding:0;}
+  .rg-caixa{border-radius:20px 20px 0 0;max-height:94vh;}
   .tipo{padding:16px;}
   .tipo-v{font-size:21px;}
   .tipo-l{font-size:11px;}
@@ -305,8 +416,34 @@ td.sub{padding-left:26px;}
       <div class="hdr-client" id="hClient">—</div>
       <div class="hdr-seg" id="hSeg"></div>
     </div>
-    <select class="hdr-sel" id="selCliente" onchange="trocarCliente(this.value)"></select>
+    <div class="hdr-r">
+      <button class="bt-anotar" id="btAnotar" type="button" hidden>✎ Anotar o dia</button>
+      <select class="hdr-sel" id="selCliente" onchange="trocarCliente(this.value)"></select>
+    </div>
   </div>
+
+  <!-- FORMULARIO "ANOTAR O DIA" (registro diario) -->
+  <div class="rg-fundo" id="regFundo" hidden>
+    <form class="rg-caixa" id="regForm" role="dialog" aria-modal="true" aria-labelledby="regTitulo" novalidate>
+      <div class="rg-topo">
+        <div class="rg-titulo" id="regTitulo">Anotar o dia</div>
+        <button type="button" class="rg-x" id="regFechar" aria-label="Fechar">×</button>
+      </div>
+      <div class="rg-dia">
+        <button type="button" class="rg-seta" id="regAnt" aria-label="Dia anterior">‹</button>
+        <div class="rg-dia-c">
+          <div class="rg-dia-t" id="regDiaTxt"></div>
+          <input type="date" id="regData" class="rg-data" aria-label="Escolher o dia">
+        </div>
+        <button type="button" class="rg-seta" id="regProx" aria-label="Próximo dia">›</button>
+      </div>
+      <div class="rg-aviso" id="regAviso"></div>
+      <div id="regCampos"></div>
+      <div class="rg-msg" id="regMsg" role="alert"></div>
+      <button type="submit" class="rg-salvar" id="regSalvar">Salvar o dia</button>
+    </form>
+  </div>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
   <div class="wrap">
     <!-- FILTRO -->
@@ -337,14 +474,39 @@ td.sub{padding-left:26px;}
          perfil, compra... O relatorio se adapta ao que roda na conta: com
          um tipo so, esta secao nao aparece e o topo mostra os 4 numeros. -->
     <div id="secTipos" style="display:none;">
-      <div class="sec-t">Resultados por tipo de campanha</div>
+      <div class="sec-t">O que cada tipo de anúncio trouxe</div>
       <div class="tipos" id="tipos"></div>
     </div>
+
+    <!-- DO WHATSAPP AO CONTRATO: o que o cliente anota por dia, cruzado com
+         o investimento (so para cliente com "registro": true). -->
+    <div id="secVendas" style="display:none;">
+      <div class="sec-t">Do WhatsApp ao contrato</div>
+      <div class="vendas-h">
+        <div class="card-s" id="vendasSub"></div>
+        <button class="bt-anotar" id="btAnotar2" type="button" hidden>✎ Anotar o dia</button>
+      </div>
+      <div id="vendasCorpo"></div>
+    </div>
+
+    <details class="glossario">
+      <summary>Não entendeu algum número? Toque aqui</summary>
+      <dl>
+        <dt>Investido em anúncios</dt><dd>Quanto foi pago à Meta (Facebook e Instagram) para mostrar os anúncios no período.</dd>
+        <dt>Pessoas que viram os anúncios</dt><dd>Quantas pessoas diferentes viram pelo menos um anúncio.</dd>
+        <dt>Conversas iniciadas</dt><dd>Pessoas que clicaram no anúncio e mandaram mensagem no WhatsApp ou no Direct.</dd>
+        <dt>Custo de cada conversa</dt><dd>O valor investido dividido pelo número de conversas. Ex.: R$ 100 investidos e 20 conversas = R$ 5 cada conversa.</dd>
+        <dt>Custo para conquistar cada cliente</dt><dd>O valor investido dividido pelos contratos fechados. É quanto o anúncio custou para trazer cada cliente novo.</dd>
+        <dt>Retorno do anúncio</dt><dd>Quanto voltou em contratos para cada R$ 1,00 colocado em anúncio. Ex.: R$ 8,00 quer dizer que cada real investido virou oito em contrato.</dd>
+        <dt>De cada 100 que chamaram</dt><dd>De cada 100 pessoas que mandaram mensagem, quantas chegaram àquela etapa (reunião, proposta, contrato).</dd>
+        <dt>▲ ▼</dt><dd>Se o número subiu ou caiu em relação ao mesmo número de dias logo antes. Verde é bom, vermelho é atenção.</dd>
+      </dl>
+    </details>
 
     <!-- EVOLUCAO: uma linha, uma metrica por vez. Substituiu o grafico de
          barras + linha com dois eixos, que o Patrick achou ruim — e dois
          eixos no mesmo grafico inventam correlacao que nao existe. -->
-    <div class="sec-t">Evolução no período</div>
+    <div class="sec-t">Dia a dia</div>
     <div class="card">
       <div class="evo-h">
         <div>
@@ -354,8 +516,8 @@ td.sub{padding-left:26px;}
         </div>
         <div class="seg" id="evoSeg" role="tablist" aria-label="Métrica do gráfico">
           <button class="seg-b on" data-m="res" role="tab">Resultados</button>
-          <button class="seg-b" data-m="inv" role="tab">Investimento</button>
-          <button class="seg-b" data-m="cpr" role="tab">Custo por resultado</button>
+          <button class="seg-b" data-m="inv" role="tab">Investido</button>
+          <button class="seg-b" data-m="cpr" role="tab">Custo de cada um</button>
         </div>
       </div>
       <div class="chart-box"><canvas id="chEvo" role="img"></canvas></div>
@@ -370,38 +532,20 @@ td.sub{padding-left:26px;}
          status seria o de agora. Uma campanha que rodou em junho e foi
          pausada em julho apareceria como "pausada" ao lado de um gasto,
          dando a impressao de que gasta pausada. -->
-    <div class="sec-t">Resultados por campanha</div>
+    <div class="sec-t">Resultado de cada campanha</div>
     <div class="card">
       <div class="tbl-wrap">
         <table id="tblCamp">
           <thead><tr>
             <th>Campanha</th>
-            <th class="num">Investimento</th>
+            <th class="num">Investido</th>
             <th class="num" id="thCampRes">Resultados</th>
-            <th class="num">Custo/result.</th>
+            <th class="num">Custo de cada um</th>
           </tr></thead>
           <tbody></tbody>
         </table>
       </div>
       <div class="aviso" id="avisoCamp"></div>
-    </div>
-
-    <!-- NEGOCIO (planilha do cliente) -->
-    <div id="secNegocio" style="display:none;">
-      <div class="sec-t">Do anúncio até a venda</div>
-      <div class="kpis" id="kpisNegocio" style="margin-bottom:16px;"></div>
-
-      <div class="card" style="margin-bottom:16px;">
-        <div class="card-t">Funil do período</div>
-        <div class="card-s">Cada etapa e quanto dela passou para a seguinte</div>
-        <div id="funil"></div>
-      </div>
-
-      <div class="card">
-        <div class="card-t">Faturamento e investimento por dia</div>
-        <div class="card-s" id="fatSub"></div>
-        <div class="chart-box"><canvas id="chFat"></canvas></div>
-      </div>
     </div>
 
     <div class="foot">
@@ -441,88 +585,6 @@ async function carregarJSON(c){
   throw new Error(nome+' nao esta no pacote publicado');
 }
 
-/* ============================================================
-   PLANILHA DO CLIENTE (Google Sheets)
-   Lê pelo endpoint gviz, que serve planilha publicada como
-   "qualquer pessoa com o link". Sem token, sem backend.
-   ============================================================ */
-
-/* Aceita variacoes de nome de coluna — cada cliente escreve do seu jeito.
-   A primeira que casar vence. */
-const COLUNAS={
-  data:                   ['data','dia','date'],
-  leads_recebidos:        ['leads recebidos','leads','lead','leads recebidos no dia','contatos'],
-  contatos_atendidos:     ['contatos atendidos','atendidos','leads atendidos','respondidos'],
-  agendamentos:           ['agendamentos','agendados','agendamento','marcados'],
-  avaliacoes:             ['avaliacoes feitas','avaliacoes','avaliacao','consultas','comparecimentos'],
-  orcamentos_apresentados:['orcamentos apresentados','orcamentos','propostas','orcamento'],
-  orcamentos_fechados:    ['orcamentos fechados','fechados','vendas','venda','fechamentos'],
-  faturamento:            ['faturamento','valor','receita','valor fechado','valor vendido'],
-};
-
-/* tira acento e normaliza para casar cabecalho escrito de qualquer jeito */
-const normalizar=t=>String(t||'').trim().toLowerCase()
-  .normalize('NFD').replace(new RegExp('[\u0300-\u036f]','g'),'');
-
-/* '15/03/2026', '2026-03-15' ou Date do Sheets -> '2026-03-15' */
-function parseData(v,f){
-  if(v==null||v==='') return null;
-  // gviz manda Date(2026,2,15) — mes base zero
-  const m=String(v).match(/^Date\((\d+),(\d+),(\d+)/);
-  if(m) return `${m[1]}-${String(+m[2]+1).padStart(2,'0')}-${String(+m[3]).padStart(2,'0')}`;
-  const txt=String(f||v).trim();
-  const br=txt.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/);
-  if(br) return `${br[3]}-${br[2].padStart(2,'0')}-${br[1].padStart(2,'0')}`;
-  const iso=txt.match(/^(\d{4})-(\d{2})-(\d{2})/);
-  if(iso) return iso[0];
-  return null;
-}
-
-/* 'R$ 3.400,00' / '3400' / 3400 -> 3400 */
-function parseNumero(v,f){
-  if(v==null||v==='') return 0;
-  if(typeof v==='number') return v;
-  let t=String(f||v).replace(/[R$\s]/g,'');
-  if(t.includes(',')) t=t.replace(/\./g,'').replace(',','.');  // formato br
-  const n=parseFloat(t);
-  return isNaN(n)?0:n;
-}
-
-async function lerPlanilha(cfg){
-  const gid=cfg.gid_funil||'0';
-  const url=`https://docs.google.com/spreadsheets/d/${cfg.sheet_id}/gviz/tq?tqx=out:json&gid=${gid}`;
-  const r=await fetch(url);
-  if(!r.ok) throw new Error('planilha não acessível (HTTP '+r.status+')');
-  const txt=await r.text();
-  const json=JSON.parse(txt.replace(/^[^(]+\(/,'').replace(/\);?\s*$/,''));
-
-  const cols=(json.table?.cols||[]).map(c=>normalizar(c.label));
-  // mapeia campo -> indice da coluna
-  const idx={};
-  for(const [campo,nomes] of Object.entries(COLUNAS)){
-    const alvos=nomes.map(normalizar);
-    const i=cols.findIndex(c=>c&&alvos.includes(c));
-    if(i>=0) idx[campo]=i;
-  }
-  if(idx.data==null) throw new Error('a planilha precisa de uma coluna "Data"');
-
-  const linhas=[];
-  for(const row of (json.table?.rows||[])){
-    const c=row.c||[];
-    const data=parseData(c[idx.data]?.v,c[idx.data]?.f);
-    if(!data) continue;                    // pula linha sem data (rodape, vazio)
-    const o={data};
-    for(const campo of Object.keys(COLUNAS)){
-      if(campo==='data'||idx[campo]==null) continue;
-      o[campo]=parseNumero(c[idx[campo]]?.v,c[idx[campo]]?.f);
-    }
-    linhas.push(o);
-  }
-  linhas.sort((a,b)=>a.data.localeCompare(b.data));
-  if(!linhas.length) throw new Error('planilha sem linhas com data válida');
-  return linhas;
-}
-
 async function iniciar(){
   try{
     progresso(20,'LENDO CLIENTES');
@@ -537,22 +599,11 @@ async function iniciar(){
     DADOS=await carregarJSON(`${PASTA}/${cli.slug}.json`);
     DADOS._cfg=cli;
 
-    // planilha do cliente (opcional). Se falhar, o painel segue com os dados
-    // do gerenciador — nunca deixa a tela em branco por causa dela.
-    if(cli.planilha?.sheet_id){
-      progresso(72,'LENDO PLANILHA');
-      try{
-        DADOS.funil=await lerPlanilha(cli.planilha);
-      }catch(e){
-        console.warn('planilha não carregada:',e.message);
-        DADOS._erroPlanilha=e.message;
-      }
-    }
-
     progresso(85,'MONTANDO PAINEL');
     montarSeletor(ativos,cli.slug);
     montarCabecalho();
     prepararFiltro();
+    prepararRegistro();      // "Do WhatsApp ao contrato", so para quem tem registro
     aplicar('mes');          // abre no mes corrente, nao no historico todo
 
     progresso(100,'PRONTO');
@@ -737,7 +788,7 @@ function render(){
   }else info=`${s.length} dias no período`;
   el('fInfo').textContent=info;
   renderKPIs(s); renderEvolucao(s);
-  renderCampanhas(); renderNegocio();
+  renderCampanhas(); renderVendas();
 }
 
 /* Produtos no periodo filtrado, montados a partir de campanhas_por_dia
@@ -813,7 +864,7 @@ function focoDoPeriodo(s){
   }
   // Com um tipo so, o resultado e o dele mas a tela se comporta como
   // conta de um produto (sem "x% do investimento", sem botoes de tipo).
-  return {multi:prods.length>1,id:p.id,nome:p.nome,rotulo:p.rotulo_resultado,
+  return {multi:prods.length>1,id:p.id,nome:p.nome,rotulo:p.rotulo_resultado,descricao:p.descricao,
     fatia:totalInv?p.investimento/totalInv:0,porDia,tipos:prods};
 }
 
@@ -892,7 +943,7 @@ function renderKPIs(s){
   const ant=periodoAnterior();
   let aInv=null,aRes=null,aCpr=null,txt='';
   if(ant){
-    txt=ant.dias===1?'vs dia anterior':`vs ${ant.dias} dias anteriores`;
+    txt=ant.dias===1?'em relação ao dia anterior':`em relação aos ${ant.dias} dias anteriores`;
     aInv=totaisFoco({},ant.de,ant.ate).investimento;
     const t=totaisFoco(f,ant.de,ant.ate);
     aRes=t.resultados; aCpr=t.resultados?t.investimento/t.resultados:null;
@@ -901,16 +952,16 @@ function renderKPIs(s){
   const roxo=()=> 'linear-gradient(90deg,var(--purple),var(--lilac))';
   const cards=[];
 
-  cards.push(`<div class="kpi"><div class="kpi-l">Investimento</div>
+  cards.push(`<div class="kpi"><div class="kpi-l">Investido em anúncios</div>
     <div class="kpi-v">${brl(inv)}</div>
-    <div class="kpi-f">${dias?brl(inv/dias)+' por dia':'—'}</div>
+    <div class="kpi-f">${dias?'pago à Meta no período · '+brl(inv/dias)+' por dia':'—'}</div>
     ${selo(inv,aInv,null,txt)}
     ${m.investimento_previsto&&mensal?barraMeta(inv,m.investimento_previsto,
       p=>p>100?'var(--yellow)':roxo(),'do previsto ('+brl(m.investimento_previsto)+')'):''}</div>`);
 
-  const cardAlcance=`<div class="kpi"><div class="kpi-l">Pessoas alcançadas</div>
+  const cardAlcance=`<div class="kpi"><div class="kpi-l">Pessoas que viram os anúncios</div>
     <div class="kpi-v">${num(alc)}</div>
-    <div class="kpi-f">${inteiro?'sem repetir pessoa':'soma dos dias · pode repetir pessoa'}</div></div>`;
+    <div class="kpi-f">${inteiro?'cada pessoa contada uma vez':'soma dos dias: a mesma pessoa pode contar mais de uma vez'}</div></div>`;
 
   if(f.multi){
     cards.push(cardAlcance);
@@ -924,22 +975,40 @@ function renderKPIs(s){
 
   cards.push(`<div class="kpi hero"><div class="kpi-l">${f.rotulo}</div>
     <div class="kpi-v">${num(res)}</div>
-    <div class="kpi-f">${f.multi
-      ? `${f.nome} · ${(f.fatia*100).toFixed(0)}% do investimento`
-      : (dias?(res/dias).toFixed(1).replace('.',',')+' por dia':'—')}</div>
+    <div class="kpi-f">${explicaTipo(f.id,f.descricao,f.rotulo)}${dias?' · '+(res/dias).toFixed(1).replace('.',',')+' por dia':''}</div>
     ${selo(res,aRes,true,txt)}
     ${!f.multi&&m.resultados_alvo&&mensal?barraMeta(res,m.resultados_alvo,
       p=>p>=100?'var(--green)':roxo(),'da meta ('+num(m.resultados_alvo)+')'):''}</div>`);
 
-  cards.push(`<div class="kpi"><div class="kpi-l">Custo por ${minusc(singular(f.rotulo))}</div>
+  cards.push(`<div class="kpi"><div class="kpi-l">Custo de cada ${minusc(singular(f.rotulo))}</div>
     <div class="kpi-v">${cpr?brl(cpr):'—'}</div>
     <div class="kpi-f">${!res?'nenhum resultado no período'
-      : f.multi?'só o investimento em '+f.nome
-      : (m.custo_por_resultado_alvo?'alvo: '+brl(m.custo_por_resultado_alvo):'investimento ÷ '+minusc(f.rotulo))}</div>
+      : (m.custo_por_resultado_alvo?'alvo: '+brl(m.custo_por_resultado_alvo)+' · ':'')
+        +'o investido dividido pelo número de '+minusc(f.rotulo)}</div>
     ${selo(cpr,aCpr,false,txt)}</div>`);
 
   cards.push(cardAlcance);
   el('kpis').innerHTML=cards.join('');
+}
+
+/* O que cada numero quer dizer, em portugues de quem nao e do marketing
+   (pedido do Patrick, 12/11/2026: "custo por conversa iniciada" sozinho
+   nao diz nada para o dono da empresa). Tipo sem frase aqui usa a
+   descricao que veio do gerador. */
+const EXPLICA={
+  mensagens:'pessoas que clicaram no anúncio e mandaram mensagem',
+  perfil:'pessoas que entraram no perfil do Instagram pelo anúncio',
+  cliques:'cliques no link do anúncio',
+  site:'pessoas que abriram a página do site pelo anúncio',
+  compras:'compras feitas no site depois do anúncio',
+  leads:'pessoas que deixaram o contato no formulário',
+  cadastros:'cadastros feitos no site',
+  video:'pessoas que assistiram o vídeo até o fim (ou 15 segundos)',
+  engajamento:'curtidas, comentários e compartilhamentos',
+  alcance:'pessoas que viram o anúncio',
+};
+function explicaTipo(id,descricao,rotuloTipo){
+  return EXPLICA[id]||descricao||minusc(rotuloTipo||'');
 }
 
 /* Um cartao por tipo de campanha. Clicar no cartao mostra aquele tipo no
@@ -968,10 +1037,11 @@ function renderTipos(tipos,invTotal,ant,txt){
         <div><div class="tipo-v">${num(p.resultados)}</div>
           <div class="tipo-l">${minusc(p.rotulo_resultado)}</div>${sR}</div>
         <div><div class="tipo-v">${cpr?brl(cpr):'—'}</div>
-          <div class="tipo-l">${cpr?'por '+unid:'nenhum resultado'}</div>${sC}</div>
+          <div class="tipo-l">${cpr?'custo de cada '+unid:'nenhum resultado ainda'}</div>${sC}</div>
       </div>
+      <div class="tipo-x">${explicaTipo(p.id,p.descricao,p.rotulo_resultado)}</div>
       <div class="tipo-f">${brl(p.investimento)} investidos · ${invTotal?(p.investimento/invTotal*100).toFixed(0):0}% do total${
-        (sR||sC)?`<br><span style="color:var(--text)">▲▼ comparado aos ${txt.replace('vs ','')}</span>`:''}</div>
+        (sR||sC)?`<br><span style="color:var(--text)">▲▼ ${txt}</span>`:''}</div>
     </button>`;
   }).join('');
 }
@@ -1055,8 +1125,8 @@ function renderEvolucao(s){
 
   const M={
     res:{titulo:`${f.rotulo} por ${unid}`, val:p=>p.res, dinheiro:false},
-    inv:{titulo:`Investimento por ${unid}`, val:p=>p.invConta, dinheiro:true},
-    cpr:{titulo:`Custo por ${resUnit}, por ${unid}`, val:p=>p.res?p.inv/p.res:null, dinheiro:true},
+    inv:{titulo:`Investido em anúncios por ${unid}`, val:p=>p.invConta, dinheiro:true},
+    cpr:{titulo:`Custo de cada ${resUnit}, por ${unid}`, val:p=>p.res?p.inv/p.res:null, dinheiro:true},
   }[EVO_M];
 
   el('evoT').textContent=M.titulo;
@@ -1126,11 +1196,11 @@ function renderEvolucao(s){
 function renderTabelaEvo(pts,f,semana){
   const t=el('tblEvo');
   t.querySelector('thead').innerHTML=`<tr><th>${semana?'Semana de':'Dia'}</th>
-    <th class="num">Investimento</th><th class="num">${f.rotulo}</th>
-    <th class="num">Custo por ${minusc(singular(f.rotulo))}</th></tr>`;
+    <th class="num">Investido</th><th class="num">${f.rotulo}</th>
+    <th class="num">Custo de cada ${minusc(singular(f.rotulo))}</th></tr>`;
   t.querySelector('tbody').innerHTML=[...pts].reverse().map(p=>`<tr>
     <td class="nome">${p.rot}</td>
-    <td class="num" data-r="Investimento">${brl(p.invConta)}</td>
+    <td class="num" data-r="Investido">${brl(p.invConta)}</td>
     <td class="num" data-r="${f.rotulo}">${num(p.res)}</td>
     <td class="num" data-r="Custo">${p.res?brl(p.inv/p.res):'—'}</td></tr>`).join('')
     ||`<tr><td colspan="4"><div class="vazio">Sem dados no período.</div></td></tr>`;
@@ -1192,9 +1262,9 @@ function renderCampanhas(){
       : num(res);
     return `<tr>
       <td class="nome${sub?' sub':''}">${x.nome}</td>
-      <td class="num" data-r="Investimento">${brl(inv)}</td>
+      <td class="num" data-r="Investido">${brl(inv)}</td>
       <td class="num" data-r="${misto?'Resultado':rotulo()}">${cel}</td>
-      <td class="num" data-r="Custo por resultado">${res&&inv>0?brl(inv/res):'—'}</td></tr>`;
+      <td class="num" data-r="Custo de cada um">${res&&inv>0?brl(inv/res):'—'}</td></tr>`;
   };
 
   /* Com produtos definidos, as campanhas ficam agrupadas por produto:
@@ -1219,124 +1289,385 @@ function renderCampanhas(){
       .map(x=>linha(x,false)).join('');
   }
   el('avisoCamp').textContent=DADOS.campanhas_por_dia
-    ? 'Cada campanha soma apenas os dias dentro do período filtrado. Campanha sem gasto no período não aparece.'
+    ? 'Cada campanha mostra só o que aconteceu nos dias do período escolhido lá em cima.'
     : 'Valores por campanha estimados para o período filtrado, rateados pela participação no investimento. Os totais no topo da página são exatos.';
 }
 
 /* ============================================================
-   NEGOCIO — dados da planilha do cliente cruzados com o trafego
-   ============================================================ */
+   DO WHATSAPP AO CONTRATO — registro diario do cliente
+   (12/11/2026; primeiro cliente: Vital Clean)
 
-/* etapas do funil, na ordem. 'chave' e o campo no JSON;
-   etapa sem nenhum numero preenchido some do painel. */
-const ETAPAS=[
-  {chave:'leads_recebidos',        nome:'Leads recebidos',   sub:'chegaram de fato'},
-  {chave:'contatos_atendidos',     nome:'Atendidos',         sub:'foram respondidos'},
-  {chave:'agendamentos',           nome:'Agendamentos',      sub:'marcaram horário'},
-  {chave:'avaliacoes',             nome:'Avaliações',        sub:'compareceram'},
-  {chave:'orcamentos_apresentados',nome:'Orçamentos',        sub:'receberam proposta'},
-  {chave:'orcamentos_fechados',    nome:'Fechados',          sub:'viraram venda'},
+   O cliente anota no proprio relatorio, um formulario por dia: mensagens
+   que chegaram, reunioes agendadas e feitas, propostas enviadas, contratos
+   fechados e o valor fechado. Fica no Supabase central (schema
+   "relatorio"), atras de duas funcoes que exigem a mesma chave que abre o
+   relatorio (ver relatorios-online/supabase/registro-diario.sql).
+
+   Regra das mensagens (pedido do Patrick): vale o numero anotado pelo
+   cliente, que e mais fiel; o dia sem anotacao usa o do Gerenciador.
+   ============================================================ */
+const REGISTRO_API={
+  url:'https://hyypvthzalzexhuwojjn.supabase.co/rest/v1/rpc/',
+  chave:'sb_publishable_hfAGLt_lgHC53E9gbuGUKw_xWbgWV1i',   // publica por design; a RLS e a chave do relatorio protegem
+};
+const REG={ligado:false,dias:{},carregado:false,erro:null};
+
+const ETAPAS_VENDA=[
+  {k:'mensagens',          nome:'Mensagens que chegaram', ajuda:'pessoas que chamaram no WhatsApp'},
+  {k:'reunioes_agendadas', nome:'Reuniões agendadas',     ajuda:'conversas que viraram reunião marcada'},
+  {k:'reunioes_feitas',    nome:'Reuniões feitas',        ajuda:'reuniões que aconteceram de verdade'},
+  {k:'propostas',          nome:'Propostas enviadas',     ajuda:'clientes que receberam proposta'},
+  {k:'contratos',          nome:'Contratos fechados',     ajuda:'clientes que assinaram'},
 ];
 
-function funilFiltrado(){
-  const f=DADOS.funil||[];
-  if(!FILTRO.de||!FILTRO.ate) return f;
-  const [de,ate]=FILTRO.de<=FILTRO.ate?[FILTRO.de,FILTRO.ate]:[FILTRO.ate,FILTRO.de];
-  return f.filter(x=>x.data>=de&&x.data<=ate);
+/* Data de hoje no relogio de quem preenche (hoje() usa UTC e viraria o
+   dia as 21h em Fortaleza). */
+function hojeLocal(){
+  const d=new Date();
+  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
 }
 
-function renderNegocio(){
-  const f=funilFiltrado();
-  if(!f.length) return;                 // sem planilha conectada, secao nao aparece
-  el('secNegocio').style.display='';
+function chaveDoRelatorio(){ try{ return sessionStorage.getItem('vertice_s'); }catch(e){ return null; } }
 
-  const s=serieFiltrada();
-  const inv=s.reduce((a,x)=>a+x.investimento,0);
-  const res=s.reduce((a,x)=>a+x.resultados,0);
-  const soma=k=>f.reduce((a,x)=>a+(Number(x[k])||0),0);
-  const fat=soma('faturamento');
+async function chamarRegistro(funcao,corpo){
+  const r=await fetch(REGISTRO_API.url+funcao,{method:'POST',
+    headers:{'Content-Type':'application/json',apikey:REGISTRO_API.chave,
+      'Content-Profile':'relatorio','Accept-Profile':'relatorio'},
+    body:JSON.stringify({p_slug:DADOS._cfg.slug,p_chave:chaveDoRelatorio(),...corpo})});
+  const txt=await r.text();
+  let j=null; try{ j=txt?JSON.parse(txt):null; }catch(e){}
+  if(!r.ok) throw new Error((j&&(j.message||j.hint))||('erro '+r.status));
+  return j;
+}
 
-  // etapas com algum numero — cliente que nao usa "avaliacoes" nao ve a linha
-  const etapas=ETAPAS.map(e=>({...e,valor:soma(e.chave)})).filter(e=>e.valor>0);
-  const leads=soma('leads_recebidos');
-  const fechados=soma('orcamentos_fechados');
+async function carregarRegistro(){
+  if(!REG.ligado) return;
+  if(!chaveDoRelatorio()){ REG.erro='sem-chave'; REG.carregado=true; renderVendas(); return; }
+  try{
+    const linhas=await chamarRegistro('ler_dias',{});
+    REG.dias=Object.fromEntries((linhas||[]).map(l=>[String(l.data).slice(0,10),l]));
+    REG.erro=null;
+  }catch(e){
+    REG.erro=e.message; console.warn('registro diario:',e.message);
+  }
+  REG.carregado=true;
+  renderVendas();
+}
 
-  /* --- indicadores que so existem cruzando as duas fontes --- */
-  const item=(l,v,sub)=>`<div class="kpi">
-    <div class="kpi-l">${l}</div><div class="kpi-v" style="font-size:27px;">${v}</div>
-    ${sub?`<div class="kpi-f">${sub}</div>`:''}</div>`;
+/* Conversas do Gerenciador por dia (usadas so nos dias sem anotacao). */
+function mensagensDoGerenciador(){
+  const porDia={};
+  for(const l of DADOS.campanhas_por_dia||[])
+    if(l.grupo==='mensagens') porDia[l.data]=(porDia[l.data]||0)+l.resultados;
+  return porDia;
+}
 
-  const cards=[];
-  if(fat) cards.push(item('Faturamento',brl(fat),
-    fechados?brl(fat/fechados)+' de ticket médio':''));
-  if(fat&&inv) cards.push(item('Retorno sobre o investimento',
-    (fat/inv).toFixed(2).replace('.',',')+'x',
-    `${brl(inv)} investidos`));
-  if(leads&&inv) cards.push(item('Custo por lead real',brl(inv/leads),
-    res?`gerenciador marcou ${num(res)}`:''));
-  if(fechados&&inv) cards.push(item('Custo por venda',brl(inv/fechados),
-    `${num(fechados)} ${fechados===1?'venda':'vendas'}`));
-  el('kpisNegocio').innerHTML=cards.join('');
+function numerosDeVenda(){
+  const [de,ate]=FILTRO.de<=FILTRO.ate?[FILTRO.de,FILTRO.ate]:[FILTRO.ate,FILTRO.de];
+  const ger=mensagensDoGerenciador();
+  const t={mensagens:0,msgAnotadas:0,msgGerenciador:0,diasAnotados:0,
+    reunioes_agendadas:0,reunioes_feitas:0,propostas:0,contratos:0,valor:0};
+  for(let d=de; d<=ate; d=addDias(d,1)){
+    const r=REG.dias[d];
+    if(r){
+      t.diasAnotados++;
+      for(const k of ['reunioes_agendadas','reunioes_feitas','propostas','contratos']) t[k]+=Number(r[k]||0);
+      t.valor+=Number(r.valor||0);
+    }
+    if(r&&r.mensagens!=null){ t.mensagens+=Number(r.mensagens); t.msgAnotadas+=Number(r.mensagens); }
+    else{ const g=ger[d]||0; t.mensagens+=g; t.msgGerenciador+=g; }
+  }
+  t.investimento=serieFiltrada().reduce((a,x)=>a+x.investimento,0);
+  t.dias=Math.round((new Date(ate+'T12:00:00')-new Date(de+'T12:00:00'))/864e5)+1;
+  return t;
+}
 
-  /* --- funil: largura proporcional ao topo, taxa vs etapa anterior --- */
-  const topo=etapas.length?etapas[0].valor:0;
-  const cores=['#A855F7','#9333EA','#7C3AED','#6B21E8','#5B21B6','#4C1D95'];
-  el('funil').innerHTML=etapas.map((e,i)=>{
-    const larg=topo?Math.max(6,(e.valor/topo)*100):0;
-    const ant=i>0?etapas[i-1].valor:null;
-    const taxa=ant?((e.valor/ant)*100):null;
-    return `<div class="fn-linha">
-      <div class="fn-nome">${e.nome}<small>${e.sub}</small></div>
-      <div class="fn-track">
-        <div class="fn-fill" style="width:${larg}%;background:${cores[i%cores.length]}">${num(e.valor)}</div>
-      </div>
-      <div class="fn-taxa">${taxa!==null?`<b>${taxa.toFixed(0)}%</b> da anterior`:''}</div>
+const deCada100=(parte,todo)=>todo?Math.round(parte/todo*100):0;
+
+function renderVendas(){
+  const sec=el('secVendas');
+  if(!REG.ligado){ sec.style.display='none'; return; }
+  sec.style.display='';
+  const corpo=el('vendasCorpo');
+  const podeAnotar=REG.erro!=='sem-chave';
+  el('btAnotar').hidden=!podeAnotar; el('btAnotar2').hidden=!podeAnotar;
+
+  if(!REG.carregado){ corpo.innerHTML='<div class="card"><div class="vazio">Carregando as anotações…</div></div>'; return; }
+  if(REG.erro==='sem-chave'){
+    el('vendasSub').textContent='';
+    corpo.innerHTML='<div class="card"><div class="vazio">Para ver e anotar os números de venda, abra o relatório pelo link de acesso.</div></div>';
+    return;
+  }
+  if(REG.erro){
+    el('vendasSub').textContent='';
+    corpo.innerHTML='<div class="card"><div class="vazio">Não deu para carregar as anotações agora. Atualize a página em alguns minutos.</div></div>';
+    return;
+  }
+
+  const t=numerosDeVenda();
+  el('vendasSub').textContent=t.diasAnotados
+    ? `${t.diasAnotados} ${t.diasAnotados===1?'dia anotado':'dias anotados'} no período escolhido`
+    : 'Nenhum dia anotado neste período';
+
+  if(!t.diasAnotados){
+    corpo.innerHTML=`<div class="card vendas-vazio">
+      <div class="vv-t">Comece anotando o dia de hoje</div>
+      <div class="vv-s">Uma vez por dia, toque em <b>Anotar o dia</b> e coloque quantas mensagens chegaram,
+        quantas reuniões, propostas e contratos. Leva menos de um minuto.</div>
+      <div class="vv-s">Com isso, este relatório passa a mostrar <b>quanto custou conquistar cada cliente</b>,
+        <b>quanto voltou de cada real investido</b> e <b>uma projeção de vendas</b>.</div>
+    </div>`;
+    return;
+  }
+
+  corpo.innerHTML=cartoesDinheiro(t)+cartaoFunil(t)+cartaoProjecao(t);
+  ligarProjecao(t);
+}
+
+function cartoesDinheiro(t){
+  const c=[];
+  const card=(rot,val,sub,hero)=>`<div class="kpi ${hero?'hero':''}"><div class="kpi-l">${rot}</div>
+    <div class="kpi-v">${val}</div><div class="kpi-f">${sub}</div></div>`;
+  c.push(card('Valor fechado em contratos',brl(t.valor),
+    `${num(t.contratos)} ${t.contratos===1?'contrato fechado':'contratos fechados'} no período`,true));
+  c.push(card('Custo para conquistar cada cliente',t.contratos&&t.investimento?brl(t.investimento/t.contratos):'—',
+    t.contratos?'o que foi investido em anúncio dividido pelos contratos fechados':'aparece quando houver contrato fechado'));
+  c.push(card('Retorno do anúncio',t.investimento&&t.valor?brl(t.valor/t.investimento):'—',
+    t.investimento&&t.valor?'em contrato para cada R$ 1,00 investido em anúncio':'aparece quando houver valor fechado'));
+  c.push(card('Valor médio de cada contrato',t.contratos?brl(t.valor/t.contratos):'—',
+    t.contratos?'quanto vale, em média, cada cliente que fechou':'aparece quando houver contrato fechado'));
+  return `<div class="kpis vendas-kpis">${c.join('')}</div>`;
+}
+
+function cartaoFunil(t){
+  const topo=t.mensagens||0;
+  let origem='';
+  if(t.msgAnotadas&&t.msgGerenciador) origem=`${num(t.msgAnotadas)} anotadas por vocês + ${num(t.msgGerenciador)} do Gerenciador (dias sem anotação)`;
+  else if(t.msgGerenciador) origem='número do Gerenciador de Anúncios — anote as mensagens para ficar mais preciso';
+  else if(t.msgAnotadas) origem='anotadas por vocês';
+
+  const linhas=ETAPAS_VENDA.map((e,i)=>{
+    const v=t[e.k]||0;
+    const larg=topo?Math.max(v?3:0,Math.min(100,v/topo*100)):0;
+    const taxa=i===0?'':(topo?`<b>${deCada100(v,topo)}</b> de cada 100 que chamaram`:'');
+    return `<div class="fv-linha">
+      <div class="fv-nome">${e.nome}<small>${i===0&&origem?origem:e.ajuda}</small></div>
+      <div class="fv-barra"><div class="fv-fill" style="width:${larg}%"></div></div>
+      <div class="fv-num">${num(v)}</div>
+      <div class="fv-taxa">${taxa}</div>
     </div>`;
   }).join('');
 
-  renderFaturamento(f,s);
+  const custoMsg=t.mensagens&&t.investimento?brl(t.investimento/t.mensagens):null;
+  return `<div class="card fv-card">
+    <div class="card-t">O caminho de quem chamou até fechar</div>
+    <div class="card-s">${custoMsg?`Cada mensagem custou ${custoMsg} em anúncio. `:''}De cada 100 pessoas que chamaram, ${deCada100(t.contratos,topo)} fecharam contrato.</div>
+    ${linhas}
+  </div>`;
 }
 
-function renderFaturamento(f,s){
-  el('fatSub').textContent=f.length
-    ?`De ${diaCurto(f[0].data)} a ${diaCurto(f[f.length-1].data)} — escalas diferentes: faturamento à esquerda, investimento à direita`:'';
-  CHARTS.fat?.destroy();
-  if(!f.length) return;
-  const poucos=f.length<=3;
-  // investimento vem da serie de trafego, casado por data
-  const invPorDia=Object.fromEntries(s.map(x=>[x.data,x.investimento]));
+/* ---------- Projecao ----------
+   Regra de tres com o que aconteceu no periodo escolhido: custo de cada
+   mensagem, quantas viraram cada etapa e o valor medio do contrato. */
+function cartaoProjecao(t){
+  if(!t.mensagens||!t.investimento) return '';
+  const ritmo=Math.max(50,Math.round(t.investimento/t.dias*30/50)*50);
+  return `<div class="card pj-card">
+    <div class="card-t">Projeção: e se investir mais?</div>
+    <div class="card-s">Mude o valor e veja quanto dá para esperar, pelo que aconteceu até agora.</div>
+    <div class="pj-entrada">
+      <label for="pjValor">Investindo por mês em anúncio</label>
+      <div class="pj-campo"><span>R$</span><input id="pjValor" type="text" inputmode="numeric" value="${num(ritmo)}" aria-describedby="pjDica"></div>
+      <div class="pj-atalhos">
+        <button class="chip" data-pj="${ritmo}">ritmo atual</button>
+        <button class="chip" data-pj="${Math.round(ritmo*1.5/50)*50}">+50%</button>
+        <button class="chip" data-pj="${ritmo*2}">o dobro</button>
+      </div>
+    </div>
+    <div class="pj-saida" id="pjSaida"></div>
+    <div class="aviso" id="pjDica">É uma estimativa feita com o período escolhido lá em cima: quanto custou cada mensagem e quantas viraram contrato.
+      Quanto mais dias anotados, mais certeira. Investir o dobro nem sempre traz o dobro: o custo de cada mensagem costuma subir um pouco.</div>
+  </div>`;
+}
 
-  CHARTS.fat=new Chart(el('chFat'),{
-    data:{labels:f.map(x=>diaCurto(x.data)),datasets:[
-      {type:'bar',label:'Faturamento',data:f.map(x=>x.faturamento||0),
-       backgroundColor:'rgba(74,222,128,0.35)',borderColor:'rgba(74,222,128,0.7)',
-       borderWidth:1,borderRadius:3,yAxisID:'y',order:2,
-       ...(poucos?{barThickness:56}:{maxBarThickness:44})},
-      {type:'line',label:'Investimento',data:f.map(x=>invPorDia[x.data]||0),
-       borderColor:'#A855F7',backgroundColor:'rgba(168,85,247,0.06)',
-       borderWidth:2,pointRadius:poucos?5:0,pointHoverRadius:5,
-       pointBackgroundColor:'#A855F7',pointBorderColor:'rgba(11,9,32,0.9)',pointBorderWidth:2,
-       tension:.35,fill:!poucos,yAxisID:'y1',order:1},
-    ]},
-    options:{responsive:true,maintainAspectRatio:false,
-      interaction:{mode:'index',intersect:false},
-      plugins:{
-        legend:{labels:{color:'rgba(255,255,255,0.55)',font:{family:'Montserrat',size:11,weight:'600'},
-          usePointStyle:true,pointStyle:'circle',padding:16}},
-        tooltip:{backgroundColor:'rgba(11,9,32,0.96)',borderColor:'rgba(168,85,247,0.3)',borderWidth:1,
-          titleFont:{family:'Montserrat',size:12,weight:'700'},bodyFont:{family:'Montserrat',size:12},
-          padding:12,cornerRadius:8,
-          callbacks:{label:c=>'  '+c.dataset.label+': '+brl(c.parsed.y)}}},
-      scales:{
-        x:{grid:{display:false},ticks:{color:'rgba(255,255,255,0.30)',font:{family:'Montserrat',size:9},
-          maxRotation:0,autoSkip:true,maxTicksLimit:14}},
-        // eixos separados: o faturamento costuma ser uma ordem de grandeza maior
-        // que o investimento; no mesmo eixo a linha roxa fica colada no zero.
-        y:{position:'left',beginAtZero:true,grid:{color:'rgba(255,255,255,0.04)'},
-          ticks:{color:'rgba(74,222,128,0.55)',font:{family:'Montserrat',size:10},callback:v=>brlCurto(v)}},
-        y1:{position:'right',beginAtZero:true,grid:{display:false},
-          ticks:{color:'rgba(168,85,247,0.6)',font:{family:'Montserrat',size:10},callback:v=>brlCurto(v)}}}}
+function ligarProjecao(t){
+  const inp=el('pjValor');
+  if(!inp) return;
+  const calc=()=>{
+    const v=Number(String(inp.value).replace(/\D/g,''))||0;
+    const msgs=v/(t.investimento/t.mensagens);
+    const taxa=k=>t.mensagens?t[k]/t.mensagens:0;
+    const aprox=n=>n<0.5&&n>0?'menos de 1':'cerca de '+num(Math.round(n));
+    const linhas=[
+      ['Mensagens no WhatsApp',aprox(msgs)],
+      ['Reuniões agendadas',aprox(msgs*taxa('reunioes_agendadas'))],
+      ['Propostas enviadas',aprox(msgs*taxa('propostas'))],
+      ['Contratos fechados',t.contratos?aprox(msgs*taxa('contratos')):'—'],
+      ['Valor em contratos',t.contratos?'cerca de '+brl(Math.round(msgs*taxa('contratos')*(t.valor/t.contratos))):'—'],
+    ];
+    el('pjSaida').innerHTML=linhas.map(([n,x],i)=>`<div class="pj-l ${i===linhas.length-1?'pj-dest':''}">
+      <span>${n}</span><b>${x}</b></div>`).join('')
+      +(t.contratos?'':`<div class="pj-nota">Contratos e valor aparecem quando houver pelo menos 1 contrato fechado anotado no período.</div>`);
+  };
+  inp.addEventListener('input',()=>{
+    const d=String(inp.value).replace(/\D/g,'');
+    inp.value=d?num(Number(d)):''; calc();
   });
+  el('pjSaida').closest('.pj-card').querySelectorAll('[data-pj]').forEach(b=>
+    b.addEventListener('click',()=>{ inp.value=num(Number(b.dataset.pj)); calc(); }));
+  calc();
+}
+
+/* ============================================================
+   FORMULARIO "ANOTAR O DIA"
+   Um dia por vez. Abre no dia de hoje; as setas trocam o dia (para
+   corrigir ou anotar um dia esquecido). Dia que ja tem anotacao abre
+   preenchido. Botoes de + e - grandes: da para preencher so com o polegar.
+   ============================================================ */
+const CAMPOS_DIA=[
+  {k:'mensagens',          nome:'Mensagens que chegaram no WhatsApp', ajuda:'Quantas pessoas novas chamaram. Se não contou, deixe vazio: usamos o número do Gerenciador.', vazio:true},
+  {k:'reunioes_agendadas', nome:'Reuniões agendadas',  ajuda:'Reuniões marcadas neste dia.'},
+  {k:'reunioes_feitas',    nome:'Reuniões feitas',     ajuda:'Reuniões que aconteceram neste dia.'},
+  {k:'propostas',          nome:'Propostas enviadas',  ajuda:'Propostas ou contratos mandados para o cliente.'},
+  {k:'contratos',          nome:'Contratos fechados',  ajuda:'Clientes que assinaram neste dia.'},
+];
+let REG_DIA=null, REG_FOCO_ANTES=null;
+
+function nomeDoDia(iso){
+  const h=hojeLocal();
+  const dt=new Date(iso+'T12:00:00');
+  const sem=dt.toLocaleDateString('pt-BR',{weekday:'long'});
+  const dm=diaCurto(iso);
+  if(iso===h) return `Hoje · ${sem}, ${dm}`;
+  if(iso===addDias(h,-1)) return `Ontem · ${sem}, ${dm}`;
+  return `${sem.charAt(0).toUpperCase()+sem.slice(1)}, ${dm}`;
+}
+
+function montarFormulario(){
+  el('regCampos').innerHTML=CAMPOS_DIA.map(c=>`<div class="rg-campo">
+      <label for="rg_${c.k}">${c.nome}</label>
+      <div class="rg-ajuda">${c.ajuda}</div>
+      <div class="rg-passo">
+        <button type="button" class="rg-b" data-k="${c.k}" data-d="-1" aria-label="Diminuir ${c.nome}">−</button>
+        <input id="rg_${c.k}" type="text" inputmode="numeric" autocomplete="off" ${c.vazio?'placeholder="vazio"':''}>
+        <button type="button" class="rg-b" data-k="${c.k}" data-d="1" aria-label="Aumentar ${c.nome}">+</button>
+      </div>
+    </div>`).join('')+`<div class="rg-campo" id="rgCampoValor">
+      <label for="rg_valor">Valor total dos contratos fechados</label>
+      <div class="rg-ajuda">Some o valor de todos os contratos assinados neste dia.</div>
+      <div class="rg-dinheiro"><span>R$</span><input id="rg_valor" type="text" inputmode="decimal" autocomplete="off" placeholder="0,00"></div>
+    </div>`;
+
+  el('regCampos').addEventListener('click',e=>{
+    const b=e.target.closest('.rg-b'); if(!b) return;
+    const inp=el('rg_'+b.dataset.k);
+    const atual=inp.value===''?null:Number(inp.value)||0;
+    const novo=atual===null?(Number(b.dataset.d)>0?1:null):Math.max(0,atual+Number(b.dataset.d));
+    inp.value=novo===null?'':String(novo);
+    if(b.dataset.k==='contratos') mostrarValor();
+  });
+  el('regCampos').addEventListener('input',e=>{
+    if(e.target.id==='rg_valor'){ e.target.value=e.target.value.replace(/[^\d,.]/g,''); return; }
+    if(e.target.id&&e.target.id.startsWith('rg_')) e.target.value=e.target.value.replace(/\D/g,'').slice(0,6);
+    if(e.target.id==='rg_contratos') mostrarValor();
+  });
+}
+
+function mostrarValor(){
+  const c=Number(el('rg_contratos').value)||0;
+  el('rgCampoValor').classList.toggle('on',c>0||el('rg_valor').value!=='');
+}
+
+function carregarDiaNoFormulario(dia){
+  REG_DIA=dia;
+  el('regDiaTxt').textContent=nomeDoDia(dia);
+  el('regData').value=dia;
+  el('regProx').disabled=dia>=hojeLocal();
+  const r=REG.dias[dia];
+  el('regAviso').textContent=r?'Este dia já tem anotação. Você está corrigindo.':'';
+  for(const c of CAMPOS_DIA){
+    const v=r?r[c.k]:null;
+    el('rg_'+c.k).value=v==null?(c.vazio?'':'0'):String(v);
+  }
+  el('rg_valor').value=r&&Number(r.valor)?Number(r.valor).toLocaleString('pt-BR',{minimumFractionDigits:2}):'';
+  el('regMsg').textContent=''; el('regMsg').className='rg-msg';
+  mostrarValor();
+}
+
+function abrirFormulario(){
+  REG_FOCO_ANTES=document.activeElement;
+  carregarDiaNoFormulario(hojeLocal());
+  el('regFundo').hidden=false;
+  document.body.style.overflow='hidden';
+  setTimeout(()=>el('rg_mensagens').focus(),50);
+}
+function fecharFormulario(){
+  el('regFundo').hidden=true;
+  document.body.style.overflow='';
+  if(REG_FOCO_ANTES&&REG_FOCO_ANTES.focus) REG_FOCO_ANTES.focus();
+}
+
+function lerValorReais(t){
+  t=String(t||'').trim(); if(!t) return 0;
+  if(t.includes(',')) t=t.replace(/\./g,'').replace(',','.');
+  const n=Number(t); return isNaN(n)?NaN:n;
+}
+
+async function salvarDia(){
+  const msg=el('regMsg');
+  const val={};
+  for(const c of CAMPOS_DIA){
+    const v=el('rg_'+c.k).value.trim();
+    val[c.k]=v===''?(c.vazio?null:0):Number(v);
+  }
+  const valor=lerValorReais(el('rg_valor').value);
+  if(isNaN(valor)){ msg.textContent='O valor ficou estranho. Escreva só números, por exemplo 1500 ou 1.500,00.'; msg.className='rg-msg erro'; return; }
+  if(val.contratos>0&&!(valor>0)){ msg.textContent='Coloque o valor total dos contratos fechados.'; msg.className='rg-msg erro'; el('rg_valor').focus(); return; }
+  if(valor>0&&!val.contratos){ msg.textContent='Tem valor, mas nenhum contrato fechado. Confira o número de contratos.'; msg.className='rg-msg erro'; el('rg_contratos').focus(); return; }
+
+  const bt=el('regSalvar'); bt.disabled=true; bt.textContent='Salvando…'; msg.textContent=''; msg.className='rg-msg';
+  try{
+    const r=await chamarRegistro('salvar_dia',{p_data:REG_DIA,p_mensagens:val.mensagens,
+      p_reunioes_agendadas:val.reunioes_agendadas,p_reunioes_feitas:val.reunioes_feitas,
+      p_propostas:val.propostas,p_contratos:val.contratos,p_valor:valor});
+    REG.dias[REG_DIA]=r||{data:REG_DIA,...val,valor};
+    fecharFormulario();
+    renderVendas();
+    if(val.contratos>0){
+      avisoRapido(val.contratos===1?'Contrato fechado anotado! O relatório já está atualizado.'
+        :`${val.contratos} contratos fechados anotados! O relatório já está atualizado.`);
+      // comemoracao discreta; quem pediu menos movimento no aparelho nao ve
+      if(typeof confetti==='function'&&!matchMedia('(prefers-reduced-motion: reduce)').matches)
+        confetti({particleCount:90,spread:70,origin:{y:0.75},colors:['#A855F7','#C4B5FD','#4ade80','#ffffff']});
+    }else avisoRapido('Salvo! O relatório já está atualizado.');
+  }catch(e){
+    msg.textContent='Não deu para salvar ('+e.message+'). Confira a internet e tente de novo.';
+    msg.className='rg-msg erro';
+  }finally{
+    bt.disabled=false; bt.textContent='Salvar o dia';
+  }
+}
+
+function avisoRapido(t){
+  const a=el('toast'); a.textContent=t; a.classList.add('on');
+  clearTimeout(avisoRapido._t); avisoRapido._t=setTimeout(()=>a.classList.remove('on'),3200);
+}
+
+function prepararRegistro(){
+  REG.ligado=!!DADOS._cfg.registro;
+  if(!REG.ligado) return;
+  montarFormulario();
+  for(const id of ['btAnotar','btAnotar2']) el(id).addEventListener('click',abrirFormulario);
+  el('regFechar').addEventListener('click',fecharFormulario);
+  el('regFundo').addEventListener('click',e=>{ if(e.target===el('regFundo')) fecharFormulario(); });
+  document.addEventListener('keydown',e=>{ if(e.key==='Escape'&&!el('regFundo').hidden) fecharFormulario(); });
+  el('regAnt').addEventListener('click',()=>carregarDiaNoFormulario(addDias(REG_DIA,-1)));
+  el('regProx').addEventListener('click',()=>{ if(REG_DIA<hojeLocal()) carregarDiaNoFormulario(addDias(REG_DIA,1)); });
+  el('regData').max=hojeLocal();
+  el('regData').addEventListener('change',e=>{ const v=e.target.value; if(v&&v<=hojeLocal()) carregarDiaNoFormulario(v); });
+  el('regForm').addEventListener('submit',e=>{ e.preventDefault(); salvarDia(); });
+  renderVendas();
+  carregarRegistro();
 }
 
 /* iniciar() e chamado pelo portao de senha, apos decifrar. */
@@ -1374,7 +1705,7 @@ function renderFaturamento(f,s){
    página. A senha deriva a chave — sem ela não há nada legível
    para ler no código-fonte nem para baixar por URL.
    ============================================================ */
-const PACOTE = {"salt":"bryolhBXruNnp+GeONVTWA==","iv":"A+KRiowwA+YZd8JO","dados":"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"};
+const PACOTE = {"salt":"gZ4O73tfMO5wAOuaDwXnlg==","iv":"t8Ff3Xa+AL60XTve","dados":"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"};
 let COFRE = null;   // dados decifrados, preenchido após a senha correta
 
 const b64 = s => Uint8Array.from(atob(s), c => c.charCodeAt(0));
