@@ -384,4 +384,4 @@ async function statusDosGrupos(conta) {
   };
 }
 
-module.exports = { ...criarColeta(mapaCfc), criarColeta };
+module.exports = { ...criarColeta(mapaCfc), criarColeta, janelasMensais };

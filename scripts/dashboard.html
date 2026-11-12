@@ -156,6 +156,39 @@ td.sub{padding-left:26px;}
 .kpi-d small{font-weight:600;color:var(--text);font-size:10px;}
 @media(max-width:1100px){.kpis{grid-template-columns:repeat(2,minmax(0,1fr));}}
 
+.kpis.dois{grid-template-columns:repeat(2,minmax(0,1fr));}
+
+/* ---- Cartao por tipo de campanha ---- */
+.tipos{display:grid;grid-template-columns:repeat(auto-fit,minmax(270px,1fr));gap:14px;}
+.tipo{all:unset;box-sizing:border-box;display:flex;flex-direction:column;gap:12px;cursor:pointer;
+  background:var(--card);border:1px solid var(--border);border-radius:16px;padding:20px 22px;
+  transition:border-color .15s,background .15s;}
+.tipo:hover{border-color:var(--border2);}
+.tipo:focus-visible{outline:2px solid var(--lilac);outline-offset:2px;}
+.tipo.on{border-color:rgba(168,85,247,0.55);background:rgba(168,85,247,0.06);}
+.tipo.off .tipo-g{opacity:.6;}
+.tipo-h{display:flex;align-items:center;justify-content:space-between;gap:10px;}
+.tipo-n{font-size:13px;font-weight:800;color:#fff;}
+.tipo-st{font-size:9px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;
+  padding:3px 8px;border-radius:20px;white-space:nowrap;}
+.tipo-st.ar{color:var(--green);background:rgba(74,222,128,0.10);}
+.tipo-st.pa{color:var(--text2);background:rgba(255,255,255,0.06);}
+.tipo-g{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+.tipo-v{font-size:26px;font-weight:800;letter-spacing:-.6px;line-height:1.05;}
+.tipo-g>div:first-child .tipo-v{color:var(--light);}
+.tipo-l{font-size:10.5px;font-weight:600;color:var(--text);margin-top:4px;line-height:1.35;}
+.tipo .kpi-d{margin-top:7px;}
+.tipo-f{font-size:11px;font-weight:600;color:var(--text2);padding-top:11px;border-top:1px solid var(--border);}
+
+/* escolha do tipo no grafico */
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px;}
+.chips:empty{display:none;}
+.chip{padding:6px 11px;border-radius:20px;border:1px solid rgba(168,85,247,0.22);background:none;cursor:pointer;
+  font-family:'Montserrat',sans-serif;font-size:11px;font-weight:700;color:var(--text2);}
+.chip:hover{color:#fff;border-color:var(--border2);}
+.chip.on{background:rgba(168,85,247,0.22);border-color:transparent;color:#fff;}
+.chip:focus-visible{outline:2px solid var(--lilac);outline-offset:1px;}
+
 /* ---- Evolucao ---- */
 .evo-h{display:flex;justify-content:space-between;align-items:flex-start;gap:14px;flex-wrap:wrap;margin-bottom:6px;}
 .seg{display:inline-flex;padding:3px;gap:2px;border-radius:10px;background:rgba(255,255,255,0.04);
@@ -236,6 +269,10 @@ td.sub{padding-left:26px;}
   .kpi-v,.kpi.hero .kpi-v{font-size:22px;letter-spacing:-.4px;}
   .kpi{padding:16px 14px;}
   .kpi-d{font-size:10.5px;}
+  .tipo{padding:16px;}
+  .tipo-v{font-size:21px;}
+  .tipo-l{font-size:11px;}
+  .chip{min-height:40px;font-size:12px;}
   .rod{font-size:11px;}
 }
 </style>
@@ -291,6 +328,14 @@ td.sub{padding-left:26px;}
          Patrick: "as metricas principais apenas, sem sujar"). -->
     <div class="kpis" id="kpis"></div>
 
+    <!-- UM CARTAO POR TIPO DE CAMPANHA (12/11/2026): mensagem, visita ao
+         perfil, compra... O relatorio se adapta ao que roda na conta: com
+         um tipo so, esta secao nao aparece e o topo mostra os 4 numeros. -->
+    <div id="secTipos" style="display:none;">
+      <div class="sec-t">Resultados por tipo de campanha</div>
+      <div class="tipos" id="tipos"></div>
+    </div>
+
     <!-- EVOLUCAO: uma linha, uma metrica por vez. Substituiu o grafico de
          barras + linha com dois eixos, que o Patrick achou ruim — e dois
          eixos no mesmo grafico inventam correlacao que nao existe. -->
@@ -300,6 +345,7 @@ td.sub{padding-left:26px;}
         <div>
           <div class="card-t" id="evoT"></div>
           <div class="card-s" id="evoSub"></div>
+          <div class="chips" id="evoTipos" role="group" aria-label="Tipo de campanha"></div>
         </div>
         <div class="seg" id="evoSeg" role="tablist" aria-label="Métrica do gráfico">
           <button class="seg-b on" data-m="res" role="tab">Resultados</button>
@@ -729,7 +775,8 @@ function produtosNoFiltro(){
    "Custo por conversa iniciada". So tira o s de palavra longa: "no",
    "em", "link" e "grupo" ficam como estao. */
 const singular=t=>String(t||'').split(' ')
-  .map(w=>w.length>3&&/s$/i.test(w)?w.slice(0,-1):w).join(' ');
+  .map(w=>/ões$/i.test(w)?w.slice(0,-3)+'ão'
+    :(w.length>3&&/s$/i.test(w)?w.slice(0,-1):w)).join(' ');
 const minusc=t=>t?t.charAt(0).toLowerCase()+t.slice(1):t;
 
 /* ---------- Foco do resultado ----------
@@ -740,29 +787,36 @@ const minusc=t=>t?t.charAt(0).toLowerCase()+t.slice(1):t;
    DELE. Somar compra com conversa num numero so nao significaria nada, e
    dividir o investimento da conta toda pelas conversas inflaria o custo.
    Os outros produtos aparecem na tabela "Resultados por campanha". */
+/* Tipo escolhido para o grafico (clique no cartao ou no botao). Sem
+   escolha, ou se o escolhido nao tem gasto no periodo, vale o de maior
+   investimento. */
+let EVO_TIPO=null;
+
 function focoDoPeriodo(s){
   const prods=DADOS.campanhas_por_dia?produtosNoFiltro():[];
   const totalInv=s.reduce((a,x)=>a+x.investimento,0);
-  if(prods.length<=1){
+  if(!prods.length){
     return {multi:false,id:null,nome:null,rotulo:rotulo(),fatia:1,
       porDia:Object.fromEntries(s.map(x=>[x.data,
         {investimento:x.investimento,resultados:x.resultados}]))};
   }
-  const p=prods[0];
+  const p=prods.find(x=>x.id===EVO_TIPO)||prods[0];
   const porDia={};
   for(const l of DADOS.campanhas_por_dia){
     if(l.grupo!==p.id||l.data<FILTRO.de||l.data>FILTRO.ate)continue;
     const d=porDia[l.data]||(porDia[l.data]={investimento:0,resultados:0});
     d.investimento+=l.investimento; d.resultados+=l.resultados;
   }
-  return {multi:true,id:p.id,nome:p.nome,rotulo:p.rotulo_resultado,
-    fatia:totalInv?p.investimento/totalInv:0,porDia};
+  // Com um tipo so, o resultado e o dele mas a tela se comporta como
+  // conta de um produto (sem "x% do investimento", sem botoes de tipo).
+  return {multi:prods.length>1,id:p.id,nome:p.nome,rotulo:p.rotulo_resultado,
+    fatia:totalInv?p.investimento/totalInv:0,porDia,tipos:prods};
 }
 
 /* Totais do foco num intervalo qualquer (usado na comparacao). */
 function totaisFoco(f,de,ate){
   const t={investimento:0,resultados:0};
-  if(f.multi){
+  if(f.id){
     for(const l of DADOS.campanhas_por_dia||[]){
       if(l.grupo!==f.id||l.data<de||l.data>ate)continue;
       t.investimento+=l.investimento; t.resultados+=l.resultados;
@@ -808,7 +862,13 @@ function barraMeta(valor,alvo,cor,txt){
     <div class="meta-txt">${p.toFixed(0)}% ${txt}</div></div>`;
 }
 
-/* ---------- Os quatro numeros ---------- */
+/* ---------- Numeros do topo ----------
+   Um tipo de campanha so (ex.: so mensagem): quatro numeros — investimento,
+   resultado, custo por resultado e alcance.
+   Varios tipos (mensagem + visita ao perfil + compra...): investimento e
+   alcance no topo, e um cartao por tipo logo abaixo, cada um com o seu
+   resultado, custo e investimento. Assim o cliente ve tudo o que roda na
+   conta, cada coisa na sua moeda. */
 function renderKPIs(s){
   const inv=s.reduce((a,x)=>a+x.investimento,0);
   const alcSoma=s.reduce((a,x)=>a+(x.alcance||0),0);
@@ -829,7 +889,7 @@ function renderKPIs(s){
   let aInv=null,aRes=null,aCpr=null,txt='';
   if(ant){
     txt=ant.dias===1?'vs dia anterior':`vs ${ant.dias} dias anteriores`;
-    aInv=totaisFoco({multi:false},ant.de,ant.ate).investimento;
+    aInv=totaisFoco({},ant.de,ant.ate).investimento;
     const t=totaisFoco(f,ant.de,ant.ate);
     aRes=t.resultados; aCpr=t.resultados?t.investimento/t.resultados:null;
   }
@@ -843,6 +903,20 @@ function renderKPIs(s){
     ${selo(inv,aInv,null,txt)}
     ${m.investimento_previsto&&mensal?barraMeta(inv,m.investimento_previsto,
       p=>p>100?'var(--yellow)':roxo(),'do previsto ('+brl(m.investimento_previsto)+')'):''}</div>`);
+
+  const cardAlcance=`<div class="kpi"><div class="kpi-l">Pessoas alcançadas</div>
+    <div class="kpi-v">${num(alc)}</div>
+    <div class="kpi-f">${inteiro?'sem repetir pessoa':'soma dos dias · pode repetir pessoa'}</div></div>`;
+
+  if(f.multi){
+    cards.push(cardAlcance);
+    el('kpis').classList.add('dois');
+    el('kpis').innerHTML=cards.join('');
+    renderTipos(f.tipos,inv,ant,txt);
+    return;
+  }
+  el('kpis').classList.remove('dois');
+  el('secTipos').style.display='none';
 
   cards.push(`<div class="kpi hero"><div class="kpi-l">${f.rotulo}</div>
     <div class="kpi-v">${num(res)}</div>
@@ -860,11 +934,62 @@ function renderKPIs(s){
       : (m.custo_por_resultado_alvo?'alvo: '+brl(m.custo_por_resultado_alvo):'investimento ÷ '+minusc(f.rotulo))}</div>
     ${selo(cpr,aCpr,false,txt)}</div>`);
 
-  cards.push(`<div class="kpi"><div class="kpi-l">Pessoas alcançadas</div>
-    <div class="kpi-v">${num(alc)}</div>
-    <div class="kpi-f">${inteiro?'sem repetir pessoa':'soma dos dias · pode repetir pessoa'}</div></div>`);
-
+  cards.push(cardAlcance);
   el('kpis').innerHTML=cards.join('');
+}
+
+/* Um cartao por tipo de campanha. Clicar no cartao mostra aquele tipo no
+   grafico de evolucao. */
+function renderTipos(tipos,invTotal,ant,txt){
+  el('secTipos').style.display='';
+  const st=DADOS.status_grupos||{};
+  const ativo=tipos.find(x=>x.id===EVO_TIPO)||tipos[0];
+  el('tipos').innerHTML=tipos.map(p=>{
+    const s=st[p.id], noAr=!s||s.ativas>0;
+    const cpr=p.resultados?p.investimento/p.resultados:null;
+    let sR='',sC='';
+    if(ant){
+      // sem o texto no selo: o cartao e estreito e ele quebrava em duas
+      // linhas. A referencia vai uma vez so, no rodape do cartao.
+      const t=totaisFoco({id:p.id},ant.de,ant.ate);
+      sR=selo(p.resultados,t.resultados,true,'');
+      sC=selo(cpr,t.resultados?t.investimento/t.resultados:null,false,'');
+    }
+    const unid=minusc(singular(p.rotulo_resultado));
+    return `<button class="tipo ${p.id===ativo.id?'on':''} ${noAr?'':'off'}" data-tipo="${p.id}"
+        aria-pressed="${p.id===ativo.id}" title="Ver ${p.nome} no gráfico">
+      <div class="tipo-h"><span class="tipo-n">${p.nome}</span>
+        <span class="tipo-st ${noAr?'ar':'pa'}">${noAr?'no ar':'pausado'}</span></div>
+      <div class="tipo-g">
+        <div><div class="tipo-v">${num(p.resultados)}</div>
+          <div class="tipo-l">${minusc(p.rotulo_resultado)}</div>${sR}</div>
+        <div><div class="tipo-v">${cpr?brl(cpr):'—'}</div>
+          <div class="tipo-l">${cpr?'por '+unid:'nenhum resultado'}</div>${sC}</div>
+      </div>
+      <div class="tipo-f">${brl(p.investimento)} investidos · ${invTotal?(p.investimento/invTotal*100).toFixed(0):0}% do total${
+        (sR||sC)?`<br><span style="color:var(--text)">▲▼ comparado aos ${txt.replace('vs ','')}</span>`:''}</div>
+    </button>`;
+  }).join('');
+}
+
+el('tipos').addEventListener('click',e=>{
+  const b=e.target.closest('.tipo');
+  if(!b) return;
+  escolherTipo(b.dataset.tipo);
+});
+
+function escolherTipo(id){
+  EVO_TIPO=id;
+  if(EVO_M==='inv'){   // investimento e da conta toda: mostra o resultado do tipo
+    EVO_M='res';
+    document.querySelectorAll('#evoSeg .seg-b').forEach(x=>{
+      const on=x.dataset.m==='res'; x.classList.toggle('on',on); x.setAttribute('aria-selected',on?'true':'false');
+    });
+  }
+  document.querySelectorAll('#tipos .tipo').forEach(x=>{
+    const on=x.dataset.tipo===id; x.classList.toggle('on',on); x.setAttribute('aria-pressed',on?'true':'false');
+  });
+  renderEvolucao(serieFiltrada());
 }
 
 /* ---------- Evolucao ----------
@@ -881,6 +1006,11 @@ document.querySelectorAll('#evoSeg .seg-b').forEach(b=>{
     });
     renderEvolucao(serieFiltrada());
   });
+});
+
+el('evoTipos').addEventListener('click',e=>{
+  const b=e.target.closest('.chip');
+  if(b) escolherTipo(b.dataset.tipo);
 });
 
 function pontosEvo(s,f){
@@ -926,10 +1056,16 @@ function renderEvolucao(s){
   }[EVO_M];
 
   el('evoT').textContent=M.titulo;
+  /* Botoes de tipo: so com mais de um tipo, e so para resultado e custo
+     (investimento e o da conta toda). */
+  el('evoTipos').innerHTML=f.multi&&EVO_M!=='inv'
+    ? f.tipos.map(p=>`<button class="chip ${p.id===f.id?'on':''}" data-tipo="${p.id}"
+        aria-pressed="${p.id===f.id}">${p.nome}</button>`).join('')
+    : '';
   const partes=[];
   if(s.length) partes.push(`De ${diaCurto(s[0].data)} a ${diaCurto(s[s.length-1].data)}`);
   else partes.push('Sem dados no período');
-  if(f.multi&&EVO_M!=='inv') partes.push(f.nome);
+  if(f.multi&&EVO_M==='inv') partes.push('toda a conta');
   if(EVO_M==='cpr'&&pts.some(p=>!p.res)) partes.push(`${unid}s sem ${resUnit} ficam em branco`);
   el('evoSub').textContent=partes.join(' · ');
 
@@ -1011,7 +1147,10 @@ function campanhasNoFiltro(){
     a.resultados+=l.resultados;
     m.set(l.nome,a);
   }
-  return [...m.values()].filter(x=>x.investimento>0)
+  // Campanha com resultado e sem gasto no periodo (conversa que chegou
+  // dias depois do anuncio) tambem entra: sem ela, o total do tipo e a
+  // soma das linhas nao batiam.
+  return [...m.values()].filter(x=>x.investimento>0||x.resultados>0)
     .map(x=>({...x,investimento:Number(x.investimento.toFixed(2))}));
 }
 
@@ -1051,7 +1190,7 @@ function renderCampanhas(){
       <td class="nome${sub?' sub':''}">${x.nome}</td>
       <td class="num" data-r="Investimento">${brl(inv)}</td>
       <td class="num" data-r="${misto?'Resultado':rotulo()}">${cel}</td>
-      <td class="num" data-r="Custo por resultado">${res?brl(inv/res):'—'}</td></tr>`;
+      <td class="num" data-r="Custo por resultado">${res&&inv>0?brl(inv/res):'—'}</td></tr>`;
   };
 
   /* Com produtos definidos, as campanhas ficam agrupadas por produto:

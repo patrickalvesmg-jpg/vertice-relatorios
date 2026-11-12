@@ -11,10 +11,18 @@ const fs = require('fs');
 const path = require('path');
 const meta = require('./meta-client');
 const { criarColeta } = require('./coleta-cfc');
+const porResultado = require('./coleta-resultados');
 
 // ---------------------------------------------------------------
 // Clientes configurados. Para adicionar outro, crie uma entrada
 // aqui e outra em dados/clientes.json do dashboard.
+//
+// modo: 'resultados' (padrao desde 12/11/2026) agrupa as campanhas pelo
+// TIPO de resultado que o Gerenciador mostra (mensagem, visita ao perfil,
+// compra, evento do site...) — o relatorio se adapta sozinho ao que roda
+// na conta. Ver coleta-resultados.js. `rotulos` so troca nomes; nada
+// precisa ser mapeado a mao. Sem `modo`, usa o mapa antigo por produto
+// (`grupos`, regex no nome da campanha).
 // ---------------------------------------------------------------
 const CLIENTES = {
   'cfc-academy': {
@@ -22,6 +30,12 @@ const CLIENTES = {
     nome: 'CFC Academy',
     segmento: 'Educação',
     conta: 'act_530764754757626',
+    modo: 'resultados',
+    rotulos: {
+      // Evento do site da LP do Contador Concursado (botao do WhatsApp).
+      LeadWhatsApp: { nome: 'Site → WhatsApp', rotulo: 'Leads no WhatsApp',
+        descricao: 'Quem clicou para chamar no WhatsApp na página' },
+    },
     objetivo: 'vendas',
     rotulo_resultado: 'Compras',
     // Acao da Meta que conta como "resultado" deste cliente.
@@ -59,6 +73,16 @@ const CLIENTES = {
     meses: 6,
     criativos_historicos: [],
     grupos: './grupos-vital-clean',
+    modo: 'resultados',
+    rotulos: {
+      mensagens: { nome: 'Conversas no WhatsApp',
+        descricao: 'Anúncios que levam direto para o WhatsApp da Vital Clean' },
+      LeadQualificado: { nome: 'Formulário RestoClean', rotulo: 'Leads qualificados',
+        descricao: 'Cadastros de quem gasta a partir de R$ 950 por mês com limpeza' },
+    },
+    // Os nomes reais das campanhas tem "ALTUS"; no relatorio do Douglas
+    // aparece o nome legivel (ver grupos-vital-clean.js).
+    apelido: require('./grupos-vital-clean').apelido,
     // Sem meta combinada ainda: o painel simplesmente nao mostra a barra.
     metas: {},
   },
@@ -214,37 +238,49 @@ async function main() {
   const desde = cfg.desde || mesesAtras(cfg.meses);
   const ate = hojeISO();
 
-  const mapa = require(cfg.grupos || './grupos-cfc');
-  const coleta = criarColeta(mapa);
-
   console.log(`Gerando dados de ${cfg.nome} (${desde} a ${ate})...`);
 
-
   // As consultas leves vao em paralelo.
-  const [serie, alc, pub, statusGrupos] = await Promise.all([
+  const [serie, alc, pub] = await Promise.all([
     serieDiaria(cfg, desde, ate),
     alcanceDoPeriodo(cfg, desde, ate),
     publico(cfg, desde, ate),
-    coleta.statusDosGrupos(cfg.conta),
   ]);
 
-  // As duas pesadas (campanha-dia e anuncio-dia, ambas paginadas em varios
-  // milhares de linhas) vao em serie: disparadas junto com as outras, a
-  // Meta derruba a rodada inteira com "An unknown error occurred"
-  // (subcode 99), que e como ela sinaliza carga demais de uma vez.
-  const linhasTudo = await coleta.serieDiariaPorCampanha(cfg.conta, desde, ate);
-  const criativos = await coleta.criativosAtivos(cfg.conta, desde, ate, cfg.criativos_historicos);
+  // As pesadas (campanha-dia, conjunto-dia, anuncio-dia) vao em serie:
+  // disparadas junto com as outras, a Meta derruba a rodada inteira com
+  // "An unknown error occurred" (subcode 99), que e como ela sinaliza carga
+  // demais de uma vez.
+  let camps, campDia, grupos, meses, statusGrupos, criativos;
 
-  const camps = await campanhas(cfg, desde, ate, mapa);
-  const campDia = coleta.campanhasPorDia(linhasTudo);
-  const grupos = coleta.seriesPorGrupo(linhasTudo);
-  const meses = coleta.porMes(linhasTudo);
+  if (cfg.modo === 'resultados') {
+    // Por tipo de resultado (coluna "Resultados" do Gerenciador). Sem a
+    // coleta de criativos: o relatorio nao mostra mais criativos, e ela
+    // era a consulta mais pesada da rodada.
+    const linhas = await porResultado.linhasPorTipo(cfg, desde, ate);
+    camps = porResultado.campanhasDoPeriodo(linhas);
+    campDia = porResultado.campanhasPorDia(linhas);
+    grupos = porResultado.gruposPorTipo(linhas);
+    meses = porResultado.porMes(linhas);
+    statusGrupos = await porResultado.statusPorTipo(cfg.conta, linhas);
+    criativos = { lista: [], por_dia: [] };
+  } else {
+    const mapa = require(cfg.grupos || './grupos-cfc');
+    const coleta = criarColeta(mapa);
+    statusGrupos = await coleta.statusDosGrupos(cfg.conta);
+    const linhasTudo = await coleta.serieDiariaPorCampanha(cfg.conta, desde, ate);
+    criativos = await coleta.criativosAtivos(cfg.conta, desde, ate, cfg.criativos_historicos);
+    camps = await campanhas(cfg, desde, ate, mapa);
+    campDia = coleta.campanhasPorDia(linhasTudo);
+    grupos = coleta.seriesPorGrupo(linhasTudo);
+    meses = coleta.porMes(linhasTudo);
+  }
 
   console.log(`  ${serie.length} dias de serie`);
   console.log(`  ${camps.length} campanhas com investimento`);
   console.log(`  ${pub.length} recortes de publico`);
-  console.log(`  ${Object.keys(grupos).length} grupos de produto`);
-  console.log(`  ${criativos.lista.length} criativos ativos agora`);
+  console.log(`  ${Object.keys(grupos).length} ${cfg.modo === 'resultados' ? 'tipos de resultado' : 'grupos de produto'}: ${
+    Object.values(grupos).map((g) => `${g.nome} (${g.resultados} ${g.rotulo_resultado.toLowerCase()})`).join(' · ')}`);
 
   const saida = {
     _gerado_por: 'vertice-meta-api/src/gerar-dados-dashboard.js',
