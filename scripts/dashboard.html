@@ -133,82 +133,44 @@ tbody tr:hover{background:rgba(168,85,247,0.03);}
 }
 .vazio{padding:44px 20px;text-align:center;font-size:12.5px;color:var(--text);line-height:1.8;font-weight:500;}
 
-/* ---- Produtos ---- */
-.prod-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px;}
-.prod{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:20px;}
-.prod-n{font-size:13px;font-weight:800;color:#fff;letter-spacing:-.2px;}
-.prod-d{font-size:10.5px;color:var(--text);font-weight:600;margin-top:4px;line-height:1.5;}
-.prod-inv{font-size:24px;font-weight:800;color:var(--lilac);margin-top:14px;letter-spacing:-.5px;}
-.prod-l{font-size:9.5px;color:var(--text);font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin-top:2px;}
-.prod-r{display:flex;gap:18px;margin-top:14px;padding-top:14px;border-top:1px solid var(--border);}
-.prod-rv{font-size:16px;font-weight:800;color:#fff;}
-.prod-rl{font-size:9.5px;color:var(--text);font-weight:600;margin-top:2px;line-height:1.3;}
-.prod.off{opacity:.62;}
-.prod-off{display:inline-block;margin-left:7px;font-size:8.5px;font-weight:800;
-  padding:2px 6px;border-radius:4px;background:rgba(255,255,255,0.08);
-  color:var(--text2);text-transform:uppercase;letter-spacing:.05em;vertical-align:middle;}
-.prod-c{margin-top:12px;padding-top:11px;border-top:1px solid var(--border);
-  font-size:9.5px;color:var(--text);font-weight:600;line-height:1.5;}
-.prod-ci{display:block;color:var(--text2);margin-top:3px;font-size:9.5px;
-  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+/* ---- Tabela de campanhas agrupada por produto ---- */
 tr.grp td{background:rgba(168,85,247,0.07);font-size:9.5px;font-weight:800;
   color:var(--light);text-transform:uppercase;letter-spacing:.07em;padding:9px 14px;}
 tr.grp .gv{float:right;color:var(--text2);text-transform:none;letter-spacing:0;font-weight:700;}
+tr.grp .tag-off{display:inline-block;margin-left:8px;font-size:8.5px;font-weight:800;
+  padding:2px 6px;border-radius:4px;background:rgba(255,255,255,0.08);color:var(--text2);
+  letter-spacing:.05em;vertical-align:middle;}
 td.sub{padding-left:26px;}
 
-/* ---- Investimento mensal ---- */
-.mes-barra{display:flex;height:8px;border-radius:4px;overflow:hidden;background:rgba(255,255,255,0.05);min-width:160px;}
-.mes-seg{height:100%;}
-.mes-leg{display:flex;flex-wrap:wrap;gap:10px;margin-top:6px;}
-.mes-li{display:flex;align-items:center;gap:5px;font-size:9.5px;color:var(--text2);font-weight:600;}
-.mes-pt{width:7px;height:7px;border-radius:2px;}
+/* ---- Numeros principais (12/11/2026) ----
+   Quatro numeros, do mesmo tamanho. O de resultado leva o destaque de cor
+   porque e o que o cliente procura primeiro. Algarismos proporcionais
+   (sem tabular-nums) em numero grande, para nao ficarem "soltos". */
+.kpis{grid-template-columns:repeat(4,minmax(0,1fr));}
+.kpi-v{font-size:32px;font-weight:800;letter-spacing:-.8px;}
+.kpi.hero .kpi-v{font-size:32px;color:var(--light);}
+.kpi-d{display:inline-flex;align-items:center;gap:4px;margin-top:10px;font-size:11px;font-weight:700;
+  padding:3px 8px;border-radius:20px;background:rgba(255,255,255,0.05);color:var(--text2);}
+.kpi-d.bom{color:var(--green);background:rgba(74,222,128,0.10);}
+.kpi-d.ruim{color:var(--red);background:rgba(248,113,113,0.10);}
+.kpi-d small{font-weight:600;color:var(--text);font-size:10px;}
+@media(max-width:1100px){.kpis{grid-template-columns:repeat(2,minmax(0,1fr));}}
 
-/* ---- Criativos ativos ---- */
-/* Cada campanha ocupa a largura toda e empilha: em colunas lado a lado,
-   a campanha com 5 criativos esticava e as de 2 deixavam um vazio alto
-   ao lado, sugerindo que faltava conteudo. */
-#criatGrid{display:block;}
-.cc{margin-top:24px;}
-.cc:first-child{margin-top:8px;}
-.cc-h{display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;
-  gap:6px 14px;padding:0 2px 10px;margin-bottom:2px;border-bottom:1px solid var(--border);}
-.cc-n{font-size:11.5px;font-weight:800;color:#fff;letter-spacing:-.1px;}
-.cc-g{display:inline-block;margin-left:8px;font-size:9px;font-weight:700;color:var(--lilac);
-  text-transform:uppercase;letter-spacing:.06em;}
-.cc-v{font-size:10.5px;color:var(--text2);font-weight:700;}
-.cc-nota{color:var(--text);font-weight:600;font-style:italic;margin-left:6px;}
-.criat-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(268px,1fr));gap:14px;margin-top:6px;}
-.criat{background:rgba(255,255,255,0.02);border:1px solid var(--border);border-radius:14px;overflow:hidden;
-  display:flex;flex-direction:column;transition:border-color .18s,transform .18s;}
-.criat:hover{border-color:var(--border2);transform:translateY(-2px);}
-.criat.top{border-color:rgba(74,222,128,0.4);}
-.criat-top{display:flex;gap:12px;padding:14px;}
-.criat-th{width:56px;height:56px;border-radius:9px;object-fit:cover;flex-shrink:0;background:rgba(255,255,255,0.05);}
-.criat-th-v{width:56px;height:56px;border-radius:9px;flex-shrink:0;background:rgba(168,85,247,0.12);
-  display:flex;align-items:center;justify-content:center;font-size:19px;}
-.criat-i{min-width:0;flex:1;}
-.criat-n{font-size:11.5px;font-weight:700;color:#fff;line-height:1.35;
-  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
-.criat-off{display:inline-block;margin-left:6px;font-size:8px;font-weight:800;
-  padding:2px 5px;border-radius:4px;background:rgba(255,255,255,0.09);
-  color:var(--text2);text-transform:uppercase;letter-spacing:.05em;vertical-align:middle;}
-.criat-g{font-size:9.5px;color:var(--lilac);font-weight:700;margin-top:4px;
-  text-transform:uppercase;letter-spacing:.05em;}
-.criat-m{display:grid;grid-template-columns:1fr 1fr 1fr;gap:1px;background:var(--border);margin-top:auto;}
-.criat-mc{background:#100c2c;padding:10px 8px;text-align:center;}
-.criat-mv{font-size:13px;font-weight:800;color:#fff;}
-.criat-mv.dest{color:var(--green);}
-.criat-ml{font-size:8.5px;color:var(--text);font-weight:700;margin-top:2px;
-  text-transform:uppercase;letter-spacing:.04em;line-height:1.2;}
-.criat-a{display:block;padding:10px;text-align:center;font-size:10.5px;font-weight:800;
-  color:var(--light);background:rgba(107,33,232,0.18);text-decoration:none;
-  letter-spacing:.05em;text-transform:uppercase;transition:background .18s,color .18s;}
-.criat-a:hover{background:rgba(107,33,232,0.42);color:#fff;}
-.criat-a.off{color:var(--text);background:rgba(255,255,255,0.03);cursor:default;}
-.criat-tag{position:absolute;top:9px;right:9px;font-size:8.5px;font-weight:800;padding:3px 7px;
-  border-radius:5px;background:var(--green);color:#0B0920;letter-spacing:.05em;}
-.criat-w{position:relative;}
-.criat.sd{opacity:.55;}
+/* ---- Evolucao ---- */
+.evo-h{display:flex;justify-content:space-between;align-items:flex-start;gap:14px;flex-wrap:wrap;margin-bottom:6px;}
+.seg{display:inline-flex;padding:3px;gap:2px;border-radius:10px;background:rgba(255,255,255,0.04);
+  border:1px solid rgba(168,85,247,0.18);}
+.seg-b{padding:7px 12px;border:0;border-radius:8px;background:none;cursor:pointer;
+  font-family:'Montserrat',sans-serif;font-size:11.5px;font-weight:700;color:var(--text2);transition:all .15s;}
+.seg-b:hover{color:#fff;}
+.seg-b.on{background:rgba(168,85,247,0.22);color:#fff;}
+.seg-b:focus-visible{outline:2px solid var(--lilac);outline-offset:1px;}
+.evo-tab{margin-top:14px;border-top:1px solid var(--border);padding-top:12px;}
+.evo-tab summary{cursor:pointer;font-size:11px;font-weight:700;color:var(--text2);list-style:none;}
+.evo-tab summary::-webkit-details-marker{display:none;}
+.evo-tab summary::before{content:'▸ ';color:var(--lilac);}
+.evo-tab[open] summary::before{content:'▾ ';}
+.evo-tab .tbl-wrap{margin-top:12px;max-height:340px;overflow:auto;}
 .foot{margin-top:44px;padding-top:22px;border-top:1px solid var(--border);
   display:flex;justify-content:space-between;gap:14px;flex-wrap:wrap;
   font-size:10.5px;font-weight:600;color:rgba(255,255,255,0.22);}
@@ -217,7 +179,8 @@ td.sub{padding-left:26px;}
   .hdr{padding:12px 18px;} .hdr-div,.hdr-seg{display:none;}
   .wrap{padding:20px 16px 48px;}
   .filtro{padding:14px;gap:14px;} .f-info{margin-left:0;width:100%;}
-  .kpi-v{font-size:26px;} .kpi.hero .kpi-v{font-size:29px;}
+  .kpi-v,.kpi.hero .kpi-v{font-size:26px;}
+  .kpi{padding:18px 18px;}
   .chart-box{height:250px;}
 }
 
@@ -250,10 +213,6 @@ td.sub{padding-left:26px;}
     color:var(--text);text-transform:uppercase;letter-spacing:.06em;flex-shrink:0;}
   tbody td.num{text-align:right;}
 
-  /* a distribuicao por produto ocupa a largura toda, sem o rotulo na frente */
-  tbody td[data-r="Distribuição"]{display:block;padding-top:10px;}
-  tbody td[data-r="Distribuição"]::before{display:block;margin-bottom:7px;}
-
   /* linha de grupo (produto) continua sendo um cabecalho, nao um cartao */
   tbody tr.grp{background:none;border:0;border-radius:0;padding:14px 2px 6px;
     margin:0;}
@@ -264,8 +223,9 @@ td.sub{padding-left:26px;}
   /* alvos de toque: o minimo confortavel com o polegar e 44px */
   .f-btn{min-height:44px;padding:0 16px;font-size:13px;}
   .f-date{min-height:44px;font-size:14px;padding:0 12px;}
-  .criat-a{min-height:44px;display:flex;align-items:center;justify-content:center;
-    font-size:12.5px;}
+  .seg{display:flex;width:100%;}
+  .seg-b{flex:1;min-height:44px;padding:0 6px;font-size:12px;}
+  .evo-tab summary{min-height:44px;display:flex;align-items:center;font-size:12.5px;}
 
   /* textos que ficavam pequenos demais para ler no telefone */
   .card-t{font-size:14px;}
@@ -273,7 +233,9 @@ td.sub{padding-left:26px;}
   .kpi-l{font-size:11px;}
   .kpi-f{font-size:12px;}
   .sec-t{font-size:12px;}
-  .mes-li{font-size:11.5px;}
+  .kpi-v,.kpi.hero .kpi-v{font-size:22px;letter-spacing:-.4px;}
+  .kpi{padding:16px 14px;}
+  .kpi-d{font-size:10.5px;}
   .rod{font-size:11px;}
 }
 </style>
@@ -325,50 +287,31 @@ td.sub{padding-left:26px;}
       <div class="f-info" id="fInfo"></div>
     </div>
 
-    <!-- NUMEROS -->
+    <!-- NUMEROS: so os quatro que o cliente olha (12/11/2026, pedido do
+         Patrick: "as metricas principais apenas, sem sujar"). -->
     <div class="kpis" id="kpis"></div>
 
-    <!-- EVOLUCAO -->
+    <!-- EVOLUCAO: uma linha, uma metrica por vez. Substituiu o grafico de
+         barras + linha com dois eixos, que o Patrick achou ruim — e dois
+         eixos no mesmo grafico inventam correlacao que nao existe. -->
     <div class="sec-t">Evolução no período</div>
     <div class="card">
-      <div class="card-t" id="evoT">Investimento e resultados por dia</div>
-      <div class="card-s" id="evoSub"></div>
-      <div class="chart-box"><canvas id="chEvo"></canvas></div>
-    </div>
-
-    <!-- PRODUTOS -->
-    <!-- Cada produto entrega numa moeda diferente (conversa, compra,
-         clique). Ficam lado a lado, nunca somados: 1 compra + 1 lead
-         nao sao "2 resultados". -->
-    <div id="secProdutos" style="display:none;">
-      <div class="sec-t">Produtos</div>
-      <div class="prod-grid" id="prodGrid"></div>
-    </div>
-
-    <!-- INVESTIMENTO POR MES -->
-    <div id="secMensal" style="display:none;">
-      <div class="sec-t">Investimento por mês</div>
-      <div class="card">
-        <div class="card-t">Total da conta em cada mês</div>
-        <div class="card-s" id="mensalSub"></div>
-        <div class="tbl-wrap">
-          <table id="tblMensal">
-            <thead><tr><th>Mês</th><th class="num">Investimento</th><th>Distribuição por produto</th></tr></thead>
-            <tbody></tbody>
-          </table>
+      <div class="evo-h">
+        <div>
+          <div class="card-t" id="evoT"></div>
+          <div class="card-s" id="evoSub"></div>
+        </div>
+        <div class="seg" id="evoSeg" role="tablist" aria-label="Métrica do gráfico">
+          <button class="seg-b on" data-m="res" role="tab">Resultados</button>
+          <button class="seg-b" data-m="inv" role="tab">Investimento</button>
+          <button class="seg-b" data-m="cpr" role="tab">Custo por resultado</button>
         </div>
       </div>
-    </div>
-
-    <!-- CRIATIVOS ATIVOS -->
-    <div id="secCriativos" style="display:none;">
-      <div class="sec-t">Criativos no ar agora</div>
-      <div class="card">
-        <div class="card-t">Desempenho por criativo, dentro de cada campanha</div>
-        <div class="card-s" id="criatSub"></div>
-        <div class="criat-grid" id="criatGrid"></div>
-        <div class="aviso" id="avisoCriat"></div>
-      </div>
+      <div class="chart-box"><canvas id="chEvo" role="img"></canvas></div>
+      <details class="evo-tab">
+        <summary>Ver os números dia a dia</summary>
+        <div class="tbl-wrap"><table id="tblEvo"><thead></thead><tbody></tbody></table></div>
+      </details>
     </div>
 
     <!-- CAMPANHAS -->
@@ -376,7 +319,7 @@ td.sub{padding-left:26px;}
          status seria o de agora. Uma campanha que rodou em junho e foi
          pausada em julho apareceria como "pausada" ao lado de um gasto,
          dando a impressao de que gasta pausada. -->
-    <div class="sec-t">Campanhas</div>
+    <div class="sec-t">Resultados por campanha</div>
     <div class="card">
       <div class="tbl-wrap">
         <table id="tblCamp">
@@ -390,14 +333,6 @@ td.sub{padding-left:26px;}
         </table>
       </div>
       <div class="aviso" id="avisoCamp"></div>
-    </div>
-
-    <!-- PUBLICO -->
-    <div class="sec-t">Perfil demográfico</div>
-    <div class="card">
-      <div class="card-t">Resultados por idade e gênero</div>
-      <div class="card-s" id="pubSub"></div>
-      <div class="chart-box sm"><canvas id="chPub"></canvas></div>
     </div>
 
     <!-- NEGOCIO (planilha do cliente) -->
@@ -735,6 +670,11 @@ function filtroEhUmMes(){
 }
 
 /* ---------- render ---------- */
+/* Desde 12/11/2026 o relatorio mostra so o que e resultado: os quatro
+   numeros, a evolucao e a tabela por campanha. Sairam (pedido do Patrick,
+   "nao quero sujar com muita informacao"): criativos no ar, investimento
+   por mes, perfil demografico e os cartoes de produto. Os dados continuam
+   no JSON; so nao sao desenhados. */
 function render(){
   const s=serieFiltrada();
   // um dia só: mostra a data em vez de "1 dia", e avisa se não for hoje de fato
@@ -747,55 +687,12 @@ function render(){
   }else info=`${s.length} dias no período`;
   el('fInfo').textContent=info;
   renderKPIs(s); renderEvolucao(s);
-  renderCampanhas(); renderPublico(); renderNegocio();
-  renderProdutos(); renderMensal(); renderCriativos();
+  renderCampanhas(); renderNegocio();
 }
-
-/* Topo de conta multi-produto: visao geral do que e somavel.
-   Investimento e alcance somam entre produtos; resultado nao. */
-function renderKPIsGerais({inv,imp,alc,inteiro,mensal,dias,metas}){
-  const cards=[];
-
-  let bInv='';
-  if(metas.investimento_previsto&&mensal){
-    const p=(inv/metas.investimento_previsto)*100, estourou=p>100;
-    bInv=`<div class="meta-bar">
-      <div class="meta-track"><div class="meta-fill" style="width:${Math.min(100,p)}%;background:${estourou?'var(--yellow)':'linear-gradient(90deg,var(--purple),var(--lilac))'}"></div></div>
-      <div class="meta-txt"${estourou?' style="color:var(--yellow)"':''}>${p.toFixed(0)}% do previsto (${brl(metas.investimento_previsto)})</div></div>`;
-  }
-  cards.push(`<div class="kpi hero"><div class="kpi-l">Investimento total</div>
-    <div class="kpi-v">${brl(inv)}</div>
-    <div class="kpi-f">${dias?brl(inv/dias)+' por dia':'—'}</div>${bInv}</div>`);
-
-  cards.push(`<div class="kpi"><div class="kpi-l">Pessoas alcançadas</div>
-    <div class="kpi-v">${num(alc)}</div>
-    <div class="kpi-f">${inteiro?'sem repetir pessoa':'soma diária · repete quem viu em dias diferentes'}</div></div>`);
-
-  cards.push(`<div class="kpi"><div class="kpi-l">Exibições</div>
-    <div class="kpi-v">${num(imp)}</div>
-    <div class="kpi-f">${alc?(imp/alc).toFixed(2).replace('.',',')+' vezes por pessoa':''}</div></div>`);
-
-  const qtd=Object.keys(DADOS.grupos_produto||{}).length;
-  cards.push(`<div class="kpi"><div class="kpi-l">Produtos no período</div>
-    <div class="kpi-v">${qtd}</div>
-    <div class="kpi-f">resultado de cada um logo abaixo</div></div>`);
-
-  el('kpis').innerHTML=cards.join('');
-}
-
-/* ---------- Produtos ----------
-   Cada grupo tem a sua propria moeda de resultado. Ficam lado a lado e
-   NUNCA somados — juntar compra com lead numa coluna so nao significa nada.
-   Esta secao ignora o filtro de periodo: vem do recorte operacional
-   (ultimos 2 meses) gravado pelo gerador. */
-const CORES_PROD=['#A855F7','#4ade80','#38bdf8','#facc15','#f87171'];
-
-function corProduto(i){return CORES_PROD[i%CORES_PROD.length];}
 
 /* Produtos no periodo filtrado, montados a partir de campanhas_por_dia
    (a mesma fonte da tabela de campanhas). Assim produto e campanha nunca
-   discordam, e o bloco acompanha o filtro em vez de ficar preso no
-   recorte de 2 meses do gerador. */
+   discordam, e o bloco acompanha o filtro. */
 function produtosNoFiltro(){
   const linhas=DADOS.campanhas_por_dia;
   const meta=DADOS.grupos_produto||{};
@@ -828,383 +725,275 @@ function produtosNoFiltro(){
     .sort((a,b)=>b.investimento-a.investimento);
 }
 
-function renderProdutos(){
-  const lista=produtosNoFiltro();
-  if(!lista.length){el('secProdutos').style.display='none';return;}
-  el('secProdutos').style.display='';
+/* "Conversas iniciadas" -> "Conversa iniciada", para escrever
+   "Custo por conversa iniciada". So tira o s de palavra longa: "no",
+   "em", "link" e "grupo" ficam como estao. */
+const singular=t=>String(t||'').split(' ')
+  .map(w=>w.length>3&&/s$/i.test(w)?w.slice(0,-1):w).join(' ');
+const minusc=t=>t?t.charAt(0).toLowerCase()+t.slice(1):t;
 
-  const total=lista.reduce((s,p)=>s+p.investimento,0);
-
-  el('prodGrid').innerHTML=lista.map((p,i)=>{
-    const cor=corProduto(i);
-    const fatia=total?(p.investimento/total*100):0;
-    /* Uma campanha: mostra o nome. Varias: diz quantas sao, porque um
-       produto pode estar dividido em duas campanhas — o cliente precisa
-       ver que o numero ja vem somado.
-       (Esta pagina vai para todos os clientes: comentario sem nome de cliente.) */
-    const camps=p.campanhas.length===1
-      ? `<div class="prod-c">${p.campanhas[0]}</div>`
-      : `<div class="prod-c">${p.campanhas.length} campanhas somadas:${
-          p.campanhas.map(n=>`<span class="prod-ci">${n}</span>`).join('')}</div>`;
-    /* Produto sem nenhuma campanha ativa: ele gastou no periodo mas nao
-       esta mais no ar. Sem essa marca, o card sugere que ainda roda. */
-    const st=(DADOS.status_grupos||{})[p.id];
-    const parado=st&&st.ativas===0;
-    return `<div class="prod ${parado?'off':''}" style="border-left:3px solid ${cor}">
-      <div class="prod-n">${p.nome}${parado?'<span class="prod-off">parado</span>':''}</div>
-      <div class="prod-d">${p.descricao||''}</div>
-      <div class="prod-inv" style="color:${cor}">${brl(p.investimento)}</div>
-      <div class="prod-l">Investido · ${fatia.toFixed(0)}% da conta</div>
-      <div class="prod-r">
-        <div><div class="prod-rv">${num(p.resultados)}</div>
-          <div class="prod-rl">${p.rotulo_resultado}</div></div>
-        <div><div class="prod-rv">${p.custo_por_resultado?brl(p.custo_por_resultado):'—'}</div>
-          <div class="prod-rl">Custo unitário</div></div>
-      </div>
-      ${camps}</div>`;
-  }).join('');
-}
-
-/* ---------- Investimento por mes ---------- */
-function renderMensal(){
-  /* So os meses tocados pelo filtro. Antes a tabela listava junho a
-     agosto mesmo com o filtro em agosto — o painel se contradizia. */
-  const m=(DADOS.investimento_mensal||[])
-    .filter(x=>x.mes>=FILTRO.de.slice(0,7)&&x.mes<=FILTRO.ate.slice(0,7));
-
-  /* Com um mes so, a tabela repetiria o numero que ja esta no topo. */
-  if(m.length<2){el('secMensal').style.display='none';return;}
-  el('secMensal').style.display='';
-
-  const g=DADOS.grupos_produto||{};
-  const ordem=Object.values(g).sort((a,b)=>b.investimento-a.investimento).map(x=>x.id);
-  const corDe=id=>corProduto(Math.max(0,ordem.indexOf(id)));
-
-  el('mensalSub').textContent=`De ${diaCurto(FILTRO.de)} a ${diaCurto(FILTRO.ate)}`;
-
-  el('tblMensal').querySelector('tbody').innerHTML=m.map(x=>{
-    const [ano,mes]=x.mes.split('-');
-    const nm=['','janeiro','fevereiro','março','abril','maio','junho','julho',
-      'agosto','setembro','outubro','novembro','dezembro'][Number(mes)];
-    const partes=Object.entries(x.grupos)
-      .filter(([,v])=>v.investimento>0)
-      .sort((a,b)=>b[1].investimento-a[1].investimento);
-    const barra=partes.map(([id,v])=>
-      `<div class="mes-seg" style="width:${(v.investimento/x.investimento*100).toFixed(1)}%;
-        background:${corDe(id)}" title="${g[id]?g[id].nome:id}: ${brl(v.investimento)}"></div>`).join('');
-    const leg=partes.map(([id,v])=>
-      `<span class="mes-li"><span class="mes-pt" style="background:${corDe(id)}"></span>
-        ${g[id]?g[id].nome:id} · ${brl(v.investimento)}</span>`).join('');
-    return `<tr>
-      <td class="nome">${nm} de ${ano}</td>
-      <td class="num" data-r="Investimento">${brl(x.investimento)}</td>
-      <td data-r="Distribuição"><div class="mes-barra">${barra}</div>
-        <div class="mes-leg">${leg}</div></td>
-    </tr>`;
-  }).join('');
-}
-
-/* ---------- Criativos ativos ----------
-   Duas verdades diferentes de proposito: o status e de AGORA (so entra
-   quem esta no ar), o desempenho e do recorte operacional. Um criativo
-   ligado ontem aparece com o gasto de ontem. */
-/* Recalcula cada criativo dentro do filtro, a partir da serie por dia.
-   Sem isso a secao mostrava sempre o mesmo recorte fixo, e o painel
-   dizia "agosto" no topo com numeros de junho a agosto nos cards. */
-function criativosNoFiltro(){
-  const base=DADOS.criativos_ativos||[];
-  const dias=DADOS.criativos_por_dia;
-  if(!dias) return base;
-
-  const acc=new Map();
-  for(const l of dias){
-    if(l.data<FILTRO.de||l.data>FILTRO.ate)continue;
-    const a=acc.get(l.ad_id)||{investimento:0,resultados:0};
-    a.investimento+=l.investimento;
-    a.resultados+=l.resultados;
-    acc.set(l.ad_id,a);
+/* ---------- Foco do resultado ----------
+   Conta com um produto so: o resultado e o da conta inteira.
+   Conta com varios produtos, cada um numa moeda (conversa, compra,
+   clique): o topo e o grafico mostram o produto que mais recebeu
+   investimento no periodo, e o custo e calculado so sobre o investimento
+   DELE. Somar compra com conversa num numero so nao significaria nada, e
+   dividir o investimento da conta toda pelas conversas inflaria o custo.
+   Os outros produtos aparecem na tabela "Resultados por campanha". */
+function focoDoPeriodo(s){
+  const prods=DADOS.campanhas_por_dia?produtosNoFiltro():[];
+  const totalInv=s.reduce((a,x)=>a+x.investimento,0);
+  if(prods.length<=1){
+    return {multi:false,id:null,nome:null,rotulo:rotulo(),fatia:1,
+      porDia:Object.fromEntries(s.map(x=>[x.data,
+        {investimento:x.investimento,resultados:x.resultados}]))};
   }
-
-  const lista=base.map(x=>{
-    const a=acc.get(x.id);
-    const inv=a?Number(a.investimento.toFixed(2)):0;
-    const res=a?a.resultados:0;
-    return {...x,
-      investimento:inv,
-      resultados:res,
-      custo_por_resultado:res>0?Number((inv/res).toFixed(2)):null,
-      sem_dados_no_periodo:inv===0,
-    };
-  });
-
-  /* Criativo pausado so aparece se pesou de verdade. Uma campanha pode
-     ter dezenas de anuncios parados; listar todos enterraria os poucos
-     que venderam. Corte: 2% do investimento da propria campanha. O
-     ativo nunca e cortado — esta no ar, precisa ser visto. */
-  const invCamp={};
-  for(const x of lista) invCamp[x.campanha]=(invCamp[x.campanha]||0)+x.investimento;
-
-  return lista.filter(x=>{
-    if(x.ativo!==false) return true;
-    if(x.investimento<=0) return false;
-    return x.investimento>=(invCamp[x.campanha]||0)*0.02;
-  });
+  const p=prods[0];
+  const porDia={};
+  for(const l of DADOS.campanhas_por_dia){
+    if(l.grupo!==p.id||l.data<FILTRO.de||l.data>FILTRO.ate)continue;
+    const d=porDia[l.data]||(porDia[l.data]={investimento:0,resultados:0});
+    d.investimento+=l.investimento; d.resultados+=l.resultados;
+  }
+  return {multi:true,id:p.id,nome:p.nome,rotulo:p.rotulo_resultado,
+    fatia:totalInv?p.investimento/totalInv:0,porDia};
 }
 
-function renderCriativos(){
-  const c=criativosNoFiltro();
-  if(!c.length){el('secCriativos').style.display='none';return;}
-  el('secCriativos').style.display='';
-
-  const comDados=c.filter(x=>!x.sem_dados_no_periodo);
-  const nAtivos=c.filter(x=>x.ativo!==false).length;
-  const nPausados=c.length-nAtivos;
-  el('criatSub').textContent=
-    `${nAtivos} no ar${nPausados?` · ${nPausados} pausado(s) que entregaram`:''}`
-    +` · desempenho de ${diaCurto(FILTRO.de)} a ${diaCurto(FILTRO.ate)}`;
-
-  /* O "melhor" e eleito DENTRO de cada campanha — e nela que a decisao
-     acontece: os criativos disputam o mesmo orcamento, o mesmo publico e
-     a mesma oferta. Comparar entre campanhas nao ajudaria a decidir nada,
-     porque o custo muda com o publico e o objetivo, nao so com o criativo.
-
-     E so vale com volume. Um criativo que gastou R$ 0,44 e trouxe 5
-     cliques da um custo unitario otimo por acidente estatistico — premiar
-     isso mandaria escalar o criativo errado. Por isso o selo exige pelo
-     menos 10 resultados e 10% do investimento da campanha. */
-  const MIN_RES=10, MIN_FATIA=0.10;
-
-  /* O mesmo criativo costuma rodar em varios conjuntos da campanha, e a
-     API devolve uma linha por conjunto. Sem juntar, "ADS 07" aparecia
-     tres vezes com o gasto partido — e nenhuma das partes mostrava o que
-     o criativo realmente entregou. Aqui viram um card so, somado. */
-  const porCampanha=new Map();
-  for(const x of c){
-    const k=x.campanha||'(sem campanha)';
-    const g=porCampanha.get(k)||{nome:k,grupo_nome:x.grupo_nome,porNome:new Map(),
-      investimento:0,resultados:0,rotulo:x.rotulo_resultado};
-
-    const j=g.porNome.get(x.nome);
-    if(j){
-      j.investimento=Number((j.investimento+x.investimento).toFixed(2));
-      j.resultados+=x.resultados;
-      j.copias=(j.copias||1)+1;
-      j.ativo=j.ativo||x.ativo;   // ativo em algum conjunto = ativo
-      j.custo_por_resultado=j.resultados>0
-        ? Number((j.investimento/j.resultados).toFixed(2)) : null;
-      j.sem_dados_no_periodo=j.investimento===0;
-    }else{
-      g.porNome.set(x.nome,{...x});
+/* Totais do foco num intervalo qualquer (usado na comparacao). */
+function totaisFoco(f,de,ate){
+  const t={investimento:0,resultados:0};
+  if(f.multi){
+    for(const l of DADOS.campanhas_por_dia||[]){
+      if(l.grupo!==f.id||l.data<de||l.data>ate)continue;
+      t.investimento+=l.investimento; t.resultados+=l.resultados;
     }
-
-    g.investimento+=x.investimento;
-    g.resultados+=x.resultados;
-    porCampanha.set(k,g);
-  }
-  for(const g of porCampanha.values()){
-    g.itens=[...g.porNome.values()];
-    g.investimento=Number(g.investimento.toFixed(2));
-  }
-
-  const grupos=[...porCampanha.values()].sort((a,b)=>b.investimento-a.investimento);
-
-  el('criatGrid').innerHTML=grupos.map(g=>{
-    const elegivel=x=>!x.sem_dados_no_periodo
-      && x.custo_por_resultado!==null
-      && x.resultados>=MIN_RES
-      && x.investimento>=g.investimento*MIN_FATIA;
-
-    let melhor=null;
-    for(const x of g.itens){
-      if(!elegivel(x))continue;
-      if(melhor===null||x.custo_por_resultado<melhor)melhor=x.custo_por_resultado;
+  }else{
+    for(const x of DADOS.serie_diaria||[]){
+      if(x.data<de||x.data>ate)continue;
+      t.investimento+=x.investimento; t.resultados+=x.resultados;
     }
-
-    const itens=[...g.itens].sort((a,b)=>{
-      if(a.sem_dados_no_periodo!==b.sem_dados_no_periodo)return a.sem_dados_no_periodo?1:-1;
-      if(a.custo_por_resultado===null&&b.custo_por_resultado===null)return b.investimento-a.investimento;
-      if(a.custo_por_resultado===null)return 1;
-      if(b.custo_por_resultado===null)return -1;
-      return a.custo_por_resultado-b.custo_por_resultado;
-    });
-
-    const cards=itens.map(x=>{
-      const top=elegivel(x)&&melhor===x.custo_por_resultado;
-      const th=x.miniatura
-        ? `<img class="criat-th" src="${x.miniatura}" alt="" onerror="this.outerHTML='<div class=\\'criat-th-v\\'>▶</div>'">`
-        : `<div class="criat-th-v">▶</div>`;
-      const link=x.link
-        ? `<a class="criat-a" href="${x.link}" target="_blank" rel="noopener">Abrir criativo ↗</a>`
-        : `<span class="criat-a off">Sem link de preview</span>`;
-      const cpr=x.sem_dados_no_periodo?'—':(x.custo_por_resultado?brl(x.custo_por_resultado):'—');
-      const pausado=x.ativo===false;
-      return `<div class="criat-w"><div class="criat ${top?'top':''} ${x.sem_dados_no_periodo?'sd':''}">
-        ${top?'<span class="criat-tag">MELHOR</span>':''}
-        <div class="criat-top">${th}
-          <div class="criat-i"><div class="criat-n">${x.nome}${pausado?'<span class="criat-off">pausado</span>':''}</div>
-            <div class="criat-g">${x.sem_dados_no_periodo?'sem entrega no período':x.rotulo_resultado}${
-              x.copias>1?` · ${x.copias} conjuntos`:''}</div></div></div>
-        <div class="criat-m">
-          <div class="criat-mc"><div class="criat-mv">${brl(x.investimento)}</div>
-            <div class="criat-ml">Investido</div></div>
-          <div class="criat-mc"><div class="criat-mv">${num(x.resultados)}</div>
-            <div class="criat-ml">${x.rotulo_resultado}</div></div>
-          <div class="criat-mc"><div class="criat-mv ${top?'dest':''}">${cpr}</div>
-            <div class="criat-ml">Custo un.</div></div>
-        </div>${link}</div></div>`;
-    }).join('');
-
-    const custoCamp=g.resultados>0?brl(g.investimento/g.resultados):'—';
-    /* Sem nenhum criativo elegivel, a campanha nao elege melhor: dizer
-       isso e mais util do que premiar o unico que entregou. */
-    const nota=melhor===null
-      ? `<span class="cc-nota">sem volume para eleger o melhor</span>` : '';
-    return `<div class="cc">
-      <div class="cc-h">
-        <div class="cc-n">${g.nome}<span class="cc-g">${g.grupo_nome}</span></div>
-        <div class="cc-v">${brl(g.investimento)} · ${num(g.resultados)} ${g.rotulo.toLowerCase()} · ${custoCamp} cada ${nota}</div>
-      </div>
-      <div class="criat-grid">${cards}</div>
-    </div>`;
-  }).join('');
-
-  const sd=c.length-comDados.length;
-  el('avisoCriat').textContent=
-    'Mostra os criativos no ar agora. De produtos já encerrados, entram também os pausados que pesaram no período (marcados como "pausado"), porque o que eles entregaram orienta a próxima rodada — os que quase não gastaram ficam de fora para não enterrar o resto. '
-    +`O selo "melhor" é eleito dentro de cada campanha, onde os criativos disputam o mesmo orçamento e o mesmo público, e só entram os que têm pelo menos ${MIN_RES} resultados e 10% do investimento da campanha — um criativo com gasto muito baixo pode ter custo unitário ótimo por acaso.`
-    +(sd?` ${sd} criativo(s) ativo(s) ainda sem entrega no período aparecem esmaecidos.`:'');
+  }
+  return t;
 }
 
+/* O mesmo numero de dias logo antes do filtro. Se a conta nao tem
+   historico suficiente (cliente que acabou de entrar), nao compara —
+   comparar com dias pela metade daria uma variacao inventada. */
+function periodoAnterior(){
+  const s=DADOS.serie_diaria||[];
+  if(!s.length||!FILTRO.de||!FILTRO.ate) return null;
+  const [de,ate]=FILTRO.de<=FILTRO.ate?[FILTRO.de,FILTRO.ate]:[FILTRO.ate,FILTRO.de];
+  const dias=Math.round((new Date(ate+'T12:00:00')-new Date(de+'T12:00:00'))/864e5)+1;
+  const pDe=addDias(de,-dias), pAte=addDias(de,-1);
+  if(pDe<s[0].data) return null;
+  return {de:pDe,ate:pAte,dias};
+}
+
+/* Selo de variacao. bomQuandoSobe: true (resultado), false (custo) ou
+   null (investimento, que nao e bom nem ruim por si). Seta + texto, nunca
+   so a cor. */
+function selo(atual,antes,bomQuandoSobe,txt){
+  if(atual==null||antes==null||!isFinite(antes)||antes===0) return '';
+  const v=(atual-antes)/antes*100;
+  if(Math.abs(v)<0.5) return `<div class="kpi-d">= igual <small>${txt}</small></div>`;
+  const sobe=v>0;
+  const cls=bomQuandoSobe===null?'':(sobe===bomQuandoSobe?'bom':'ruim');
+  return `<div class="kpi-d ${cls}">${sobe?'▲':'▼'} ${Math.abs(v).toFixed(0)}% <small>${txt}</small></div>`;
+}
+
+function barraMeta(valor,alvo,cor,txt){
+  const p=(valor/alvo)*100;
+  return `<div class="meta-bar">
+    <div class="meta-track"><div class="meta-fill" style="width:${Math.min(100,p)}%;background:${cor(p)}"></div></div>
+    <div class="meta-txt">${p.toFixed(0)}% ${txt}</div></div>`;
+}
+
+/* ---------- Os quatro numeros ---------- */
 function renderKPIs(s){
   const inv=s.reduce((a,x)=>a+x.investimento,0);
-  const res=s.reduce((a,x)=>a+x.resultados,0);
-  const imp=s.reduce((a,x)=>a+x.impressoes,0);
   const alcSoma=s.reduce((a,x)=>a+(x.alcance||0),0);
-  const m=DADOS.metas||{};
   const inteiro=periodoInteiro();
-  const mensal=filtroEhUmMes();   // metas so aparecem em recorte de 1 mes
   // alcance real (deduplicado) so vale para o periodo inteiro
   const alc=inteiro&&DADOS.alcance_periodo?DADOS.alcance_periodo:alcSoma;
+  const m=DADOS.metas||{};
+  const mensal=filtroEhUmMes();   // metas so aparecem em recorte de 1 mes
+  const dias=s.length;
 
-  /* Conta com varios produtos: o topo fica so com o que e somavel de
-     verdade — dinheiro e gente. Resultado nao entra aqui porque a conta
-     entrega em moedas diferentes (conversa, compra, lead, clique) e
-     somar as quatro numa cifra so nao significa nada. O resultado de
-     cada produto aparece no bloco Produtos, logo abaixo. */
-  if(DADOS.grupos_produto&&Object.keys(DADOS.grupos_produto).length>1)
-    return renderKPIsGerais({inv,imp,alc,inteiro,mensal,dias:s.length,metas:m});
+  const f=focoDoPeriodo(s);
+  const dF=Object.values(f.porDia);
+  const invF=dF.reduce((a,x)=>a+x.investimento,0);
+  const res=dF.reduce((a,x)=>a+x.resultados,0);
+  const cpr=res?invF/res:null;
 
+  const ant=periodoAnterior();
+  let aInv=null,aRes=null,aCpr=null,txt='';
+  if(ant){
+    txt=ant.dias===1?'vs dia anterior':`vs ${ant.dias} dias anteriores`;
+    aInv=totaisFoco({multi:false},ant.de,ant.ate).investimento;
+    const t=totaisFoco(f,ant.de,ant.ate);
+    aRes=t.resultados; aCpr=t.resultados?t.investimento/t.resultados:null;
+  }
+
+  const roxo=()=> 'linear-gradient(90deg,var(--purple),var(--lilac))';
   const cards=[];
 
-  let bInv='';
-  if(m.investimento_previsto&&mensal){
-    const p=(inv/m.investimento_previsto)*100, estourou=p>100;
-    bInv=`<div class="meta-bar">
-      <div class="meta-track"><div class="meta-fill" style="width:${Math.min(100,p)}%;background:${estourou?'var(--yellow)':'linear-gradient(90deg,var(--purple),var(--lilac))'}"></div></div>
-      <div class="meta-txt"${estourou?' style="color:var(--yellow)"':''}>${p.toFixed(0)}% do previsto (${brl(m.investimento_previsto)})</div></div>`;
-  }
   cards.push(`<div class="kpi"><div class="kpi-l">Investimento</div>
     <div class="kpi-v">${brl(inv)}</div>
-    <div class="kpi-f">${s.length?brl(inv/s.length)+' por dia':'—'}</div>${bInv}</div>`);
+    <div class="kpi-f">${dias?brl(inv/dias)+' por dia':'—'}</div>
+    ${selo(inv,aInv,null,txt)}
+    ${m.investimento_previsto&&mensal?barraMeta(inv,m.investimento_previsto,
+      p=>p>100?'var(--yellow)':roxo(),'do previsto ('+brl(m.investimento_previsto)+')'):''}</div>`);
 
-  let bRes='';
-  if(m.resultados_alvo&&mensal){
-    const p=(res/m.resultados_alvo)*100, bateu=p>=100;
-    bRes=`<div class="meta-bar">
-      <div class="meta-track"><div class="meta-fill" style="width:${Math.min(100,p)}%;background:${bateu?'var(--green)':'linear-gradient(90deg,var(--purple),var(--lilac))'}"></div></div>
-      <div class="meta-txt"${bateu?' style="color:var(--green)"':''}>${p.toFixed(0)}% da meta (${num(m.resultados_alvo)})</div></div>`;
-  }
-  cards.push(`<div class="kpi hero"><div class="kpi-l">${rotulo()}</div>
+  cards.push(`<div class="kpi hero"><div class="kpi-l">${f.rotulo}</div>
     <div class="kpi-v">${num(res)}</div>
-    <div class="kpi-f">${s.length?(res/s.length).toFixed(1).replace('.',',')+' por dia':'—'}</div>${bRes}</div>`);
+    <div class="kpi-f">${f.multi
+      ? `${f.nome} · ${(f.fatia*100).toFixed(0)}% do investimento`
+      : (dias?(res/dias).toFixed(1).replace('.',',')+' por dia':'—')}</div>
+    ${selo(res,aRes,true,txt)}
+    ${!f.multi&&m.resultados_alvo&&mensal?barraMeta(res,m.resultados_alvo,
+      p=>p>=100?'var(--green)':roxo(),'da meta ('+num(m.resultados_alvo)+')'):''}</div>`);
 
-  cards.push(`<div class="kpi"><div class="kpi-l">Custo por resultado</div>
-    <div class="kpi-v">${res?brl(inv/res):'—'}</div>
-    <div class="kpi-f">${m.custo_por_resultado_alvo?'alvo: '+brl(m.custo_por_resultado_alvo):''}</div></div>`);
+  cards.push(`<div class="kpi"><div class="kpi-l">Custo por ${minusc(singular(f.rotulo))}</div>
+    <div class="kpi-v">${cpr?brl(cpr):'—'}</div>
+    <div class="kpi-f">${!res?'nenhum resultado no período'
+      : f.multi?'só o investimento em '+f.nome
+      : (m.custo_por_resultado_alvo?'alvo: '+brl(m.custo_por_resultado_alvo):'investimento ÷ '+minusc(f.rotulo))}</div>
+    ${selo(cpr,aCpr,false,txt)}</div>`);
 
   cards.push(`<div class="kpi"><div class="kpi-l">Pessoas alcançadas</div>
     <div class="kpi-v">${num(alc)}</div>
-    <div class="kpi-f">${num(imp)} exibições${!inteiro?' · soma diária':''}</div></div>`);
+    <div class="kpi-f">${inteiro?'sem repetir pessoa':'soma dos dias · pode repetir pessoa'}</div></div>`);
 
   el('kpis').innerHTML=cards.join('');
 }
 
-function renderEvolucao(s){
-  el('evoSub').textContent=s.length
-    ? `De ${diaCurto(s[0].data)} a ${diaCurto(s[s.length-1].data)}`:'Sem dados no período';
-  CHARTS.evo?.destroy();
-  if(!s.length) return;
-
-  // com poucos dias a barra estica e fica horrivel; e com 1 dia so a linha
-  // nao desenha nada (ponto solto), por isso o ponto vira visivel.
-  const poucos=s.length<=3;
-
-  /* Conta multi-produto: a linha de "resultados" mostrava so compras — a
-     moeda de UM produto — em cima do investimento de todos. Aqui as
-     barras viram investimento por produto, empilhado por dia, que e o
-     unico numero comparavel entre eles. */
-  const prods=DADOS.campanhas_por_dia?produtosNoFiltro():[];
-  const multi=prods.length>1;
-  if(el('evoT')) el('evoT').textContent=multi
-    ? 'Investimento por produto, dia a dia' : 'Investimento e resultados por dia';
-  let datasets;
-
-  if(multi){
-    const porDia={};
-    for(const l of DADOS.campanhas_por_dia){
-      if(l.data<FILTRO.de||l.data>FILTRO.ate)continue;
-      (porDia[l.grupo]=porDia[l.grupo]||{})[l.data]=
-        ((porDia[l.grupo]||{})[l.data]||0)+l.investimento;
-    }
-    datasets=prods.map((p,i)=>{
-      const cor=corProduto(i);
-      return {type:'bar',label:p.nome,
-        data:s.map(x=>Number(((porDia[p.id]||{})[x.data]||0).toFixed(2))),
-        backgroundColor:cor+'99',borderColor:cor,borderWidth:1,borderRadius:3,
-        stack:'inv',yAxisID:'y',...(poucos?{barThickness:56}:{maxBarThickness:44})};
+/* ---------- Evolucao ----------
+   Uma linha, uma metrica por vez, escolhida no seletor. Sem segundo eixo.
+   Acima de ~2 meses os pontos viram semanas: 180 pontos diarios viram
+   ruido e escondem a tendencia. */
+let EVO_M='res';
+document.querySelectorAll('#evoSeg .seg-b').forEach(b=>{
+  b.setAttribute('aria-selected',b.dataset.m===EVO_M?'true':'false');
+  b.addEventListener('click',()=>{
+    EVO_M=b.dataset.m;
+    document.querySelectorAll('#evoSeg .seg-b').forEach(x=>{
+      const on=x===b; x.classList.toggle('on',on); x.setAttribute('aria-selected',on?'true':'false');
     });
-  }else{
-    datasets=[
-      {type:'bar',label:'Investimento',data:s.map(x=>x.investimento),
-       backgroundColor:'rgba(107,33,232,0.45)',borderColor:'rgba(168,85,247,0.7)',
-       borderWidth:1,borderRadius:3,yAxisID:'y',order:2,
-       ...(poucos?{barThickness:56}:{maxBarThickness:44})},
-      {type:'line',label:rotulo(),data:s.map(x=>x.resultados),
-       borderColor:'#4ade80',backgroundColor:'rgba(74,222,128,0.08)',
-       borderWidth:2,pointRadius:poucos?5:0,pointHoverRadius:5,
-       pointBackgroundColor:'#4ade80',pointBorderColor:'rgba(11,9,32,0.9)',pointBorderWidth:2,
-       tension:.35,fill:!poucos,yAxisID:'y1',order:1},
-    ];
-  }
+    renderEvolucao(serieFiltrada());
+  });
+});
 
-  CHARTS.evo=new Chart(el('chEvo'),{
-    data:{labels:s.map(x=>diaCurto(x.data)),datasets},
+function pontosEvo(s,f){
+  let pts=s.map(x=>{
+    const d=f.porDia[x.data]||{investimento:0,resultados:0};
+    return {data:x.data,rot:diaCurto(x.data),invConta:x.investimento,
+      inv:d.investimento,res:d.resultados};
+  });
+  if(pts.length>62){
+    const sem=new Map();
+    for(const p of pts){
+      const dow=(new Date(p.data+'T12:00:00').getDay()+6)%7;   // segunda = 0
+      const ini=addDias(p.data,-dow);
+      const a=sem.get(ini)||{data:ini,rot:diaCurto(ini),semana:true,invConta:0,inv:0,res:0};
+      a.invConta+=p.invConta; a.inv+=p.inv; a.res+=p.res;
+      sem.set(ini,a);
+    }
+    pts=[...sem.values()];
+  }
+  return pts;
+}
+
+const crossHair={id:'crossHair',afterDatasetsDraw(ch){
+  const a=ch.tooltip&&ch.tooltip.getActiveElements?ch.tooltip.getActiveElements():[];
+  if(!a.length)return;
+  const x=a[0].element.x, {top,bottom}=ch.chartArea, c=ch.ctx;
+  c.save(); c.strokeStyle='rgba(255,255,255,0.22)'; c.lineWidth=1;
+  c.beginPath(); c.moveTo(x,top); c.lineTo(x,bottom); c.stroke(); c.restore();
+}};
+
+function renderEvolucao(s){
+  CHARTS.evo?.destroy();
+  const f=focoDoPeriodo(s);
+  const pts=pontosEvo(s,f);
+  const semana=pts.some(p=>p.semana);
+  const unid=semana?'semana':'dia';
+  const resUnit=minusc(singular(f.rotulo));
+
+  const M={
+    res:{titulo:`${f.rotulo} por ${unid}`, val:p=>p.res, dinheiro:false},
+    inv:{titulo:`Investimento por ${unid}`, val:p=>p.invConta, dinheiro:true},
+    cpr:{titulo:`Custo por ${resUnit}, por ${unid}`, val:p=>p.res?p.inv/p.res:null, dinheiro:true},
+  }[EVO_M];
+
+  el('evoT').textContent=M.titulo;
+  const partes=[];
+  if(s.length) partes.push(`De ${diaCurto(s[0].data)} a ${diaCurto(s[s.length-1].data)}`);
+  else partes.push('Sem dados no período');
+  if(f.multi&&EVO_M!=='inv') partes.push(f.nome);
+  if(EVO_M==='cpr'&&pts.some(p=>!p.res)) partes.push(`${unid}s sem ${resUnit} ficam em branco`);
+  el('evoSub').textContent=partes.join(' · ');
+
+  renderTabelaEvo(pts,f,semana);
+  if(!pts.length) return;
+
+  const dados=pts.map(p=>{const v=M.val(p);return v==null?null:Number(v.toFixed(2));});
+  const poucos=pts.length<=16;
+  const cv=el('chEvo');
+  cv.setAttribute('aria-label',M.titulo+'. '+el('evoSub').textContent);
+  const g=cv.getContext('2d').createLinearGradient(0,0,0,300);
+  g.addColorStop(0,'rgba(168,85,247,0.20)'); g.addColorStop(1,'rgba(168,85,247,0)');
+  const fmt=v=>M.dinheiro?brl(v):num(v);
+
+  CHARTS.evo=new Chart(cv,{
+    type:'line',
+    data:{labels:pts.map(p=>p.rot),datasets:[{
+      label:M.titulo,data:dados,borderColor:'#A855F7',backgroundColor:g,fill:true,
+      /* monotone: a curva nunca passa acima/abaixo dos pontos reais (a
+         suavizacao comum inventava picos que nao existiam) */
+      borderWidth:2,cubicInterpolationMode:'monotone',spanGaps:false,borderCapStyle:'round',borderJoinStyle:'round',
+      pointRadius:poucos?4:0,pointHoverRadius:6,pointBackgroundColor:'#A855F7',
+      pointBorderColor:'#0B0920',pointBorderWidth:2,pointHitRadius:14}]},
+    plugins:[crossHair],
     options:{responsive:true,maintainAspectRatio:false,
       interaction:{mode:'index',intersect:false},
+      layout:{padding:{top:8}},
       plugins:{
-        legend:{labels:{color:'rgba(255,255,255,0.55)',font:{family:'Montserrat',size:11,weight:'600'},
-          usePointStyle:true,pointStyle:'circle',padding:16}},
+        legend:{display:false},
         tooltip:{backgroundColor:'rgba(11,9,32,0.96)',borderColor:'rgba(168,85,247,0.3)',borderWidth:1,
-          titleFont:{family:'Montserrat',size:12,weight:'700'},bodyFont:{family:'Montserrat',size:12},
-          padding:12,cornerRadius:8,
+          titleColor:'rgba(255,255,255,0.6)',bodyColor:'#fff',
+          titleFont:{family:'Montserrat',size:11,weight:'600'},bodyFont:{family:'Montserrat',size:13,weight:'700'},
+          padding:12,cornerRadius:8,displayColors:false,
           callbacks:{
-            label:c=>multi
-              ? '  '+c.dataset.label+': '+brl(c.parsed.y)
-              : (c.datasetIndex===0?'  Investimento: '+brl(c.parsed.y)
-                                   :'  '+rotulo()+': '+num(c.parsed.y)),
-            footer:it=>multi
-              ? 'Total do dia: '+brl(it.reduce((s,c)=>s+c.parsed.y,0)) : ''}}},
+            title:it=>{const p=pts[it[0].dataIndex];return p.semana?'Semana de '+p.rot:p.rot;},
+            label:c=>c.parsed.y==null?'sem '+resUnit:fmt(c.parsed.y),
+            afterLabel:c=>{
+              const p=pts[c.dataIndex];
+              if(EVO_M==='res') return p.res?'custo de '+brl(p.inv/p.res)+' cada':'';
+              if(EVO_M==='cpr') return p.res?num(p.res)+' '+minusc(f.rotulo):'';
+              return '';
+            }}}},
       scales:{
-        x:{stacked:multi,grid:{display:false},
-          ticks:{color:'rgba(255,255,255,0.30)',font:{family:'Montserrat',size:9},
-          maxRotation:0,autoSkip:true,maxTicksLimit:14}},
-        y:{position:'left',stacked:multi,beginAtZero:true,grid:{color:'rgba(255,255,255,0.04)'},
-          ticks:{color:'rgba(255,255,255,0.30)',font:{family:'Montserrat',size:10},callback:v=>brlCurto(v)}},
-        // eixo da direita so existe quando ha linha de resultados
-        ...(multi?{}:{y1:{position:'right',beginAtZero:true,grid:{display:false},
-          ticks:{color:'rgba(74,222,128,0.55)',font:{family:'Montserrat',size:10},precision:0}}}),
-      }}
+        x:{grid:{display:false},border:{color:'rgba(255,255,255,0.10)'},
+          ticks:{color:'rgba(255,255,255,0.38)',font:{family:'Montserrat',size:10,weight:'600'},
+            maxRotation:0,autoSkip:true,maxTicksLimit:8}},
+        y:{beginAtZero:true,border:{display:false},grid:{color:'rgba(255,255,255,0.06)'},
+          ticks:{color:'rgba(255,255,255,0.38)',font:{family:'Montserrat',size:10},maxTicksLimit:5,
+            precision:M.dinheiro?undefined:0,callback:v=>M.dinheiro?brlCurto(v):num(v)}}}}
   });
+}
+
+/* Tabela gemea do grafico: os mesmos numeros sem precisar passar o mouse. */
+function renderTabelaEvo(pts,f,semana){
+  const t=el('tblEvo');
+  t.querySelector('thead').innerHTML=`<tr><th>${semana?'Semana de':'Dia'}</th>
+    <th class="num">Investimento</th><th class="num">${f.rotulo}</th>
+    <th class="num">Custo por ${minusc(singular(f.rotulo))}</th></tr>`;
+  t.querySelector('tbody').innerHTML=[...pts].reverse().map(p=>`<tr>
+    <td class="nome">${p.rot}</td>
+    <td class="num" data-r="Investimento">${brl(p.invConta)}</td>
+    <td class="num" data-r="${f.rotulo}">${num(p.res)}</td>
+    <td class="num" data-r="Custo">${p.res?brl(p.inv/p.res):'—'}</td></tr>`).join('')
+    ||`<tr><td colspan="4"><div class="vazio">Sem dados no período.</div></td></tr>`;
 }
 
 /* Campanhas e anuncios: a API entrega agregado do periodo inteiro.
@@ -1274,7 +1063,11 @@ function renderCampanhas(){
       const doGrupo=comGasto
         .filter(x=>x.grupo===p.id)
         .sort((a,b)=>b.investimento-a.investimento);
-      const cab=`<tr class="grp"><td colspan="4">${p.nome}
+      /* Produto que gastou no periodo mas nao tem nenhuma campanha no ar
+         agora: sem a marca, a linha sugere que ainda roda. */
+      const st=(DADOS.status_grupos||{})[p.id];
+      const pausado=st&&st.ativas===0?'<span class="tag-off">pausado</span>':'';
+      const cab=`<tr class="grp"><td colspan="4">${p.nome}${pausado}
         <span class="gv">${brl(p.investimento)} · ${num(p.resultados)} ${p.rotulo_resultado.toLowerCase()}</span></td></tr>`;
       return cab+doGrupo.map(x=>linha(x,doGrupo.length>1)).join('');
     }).join('');
@@ -1285,43 +1078,6 @@ function renderCampanhas(){
   el('avisoCamp').textContent=DADOS.campanhas_por_dia
     ? 'Cada campanha soma apenas os dias dentro do período filtrado. Campanha sem gasto no período não aparece.'
     : 'Valores por campanha estimados para o período filtrado, rateados pela participação no investimento. Os totais no topo da página são exatos.';
-}
-
-function renderPublico(){
-  const p=DADOS.publico?.idade_genero||[];
-  /* Unica secao que nao acompanha o filtro: a Meta entrega a quebra por
-     idade e genero agregada no periodo, sem serie diaria, entao nao ha
-     como recortar sem uma chamada por intervalo. Dizer a data real evita
-     que o numero seja lido como se fosse do mes filtrado. */
-  const d=DADOS.periodo_disponivel;
-  el('pubSub').textContent=p.length
-    ? `Todo o período da conta (${diaCurto(d.de)}/${d.de.slice(0,4)} a ${diaCurto(d.ate)}) — esta seção não acompanha o filtro acima`
-    : 'Sem dados demográficos';
-  CHARTS.pub?.destroy();
-  if(!p.length) return;
-  const faixas=[...new Set(p.map(x=>x.faixa))].sort();
-  const serie=g=>faixas.map(f=>{const i=p.find(x=>x.faixa===f&&x.genero===g);return i?i.resultados:0;});
-
-  CHARTS.pub=new Chart(el('chPub'),{
-    type:'bar',
-    data:{labels:faixas,datasets:[
-      {label:'Mulheres',data:serie('female'),backgroundColor:'rgba(168,85,247,0.75)',borderRadius:4},
-      {label:'Homens',data:serie('male'),backgroundColor:'rgba(56,189,248,0.65)',borderRadius:4}]},
-    options:{responsive:true,maintainAspectRatio:false,
-      plugins:{
-        legend:{labels:{color:'rgba(255,255,255,0.55)',font:{family:'Montserrat',size:11,weight:'600'},
-          usePointStyle:true,pointStyle:'circle',padding:16}},
-        tooltip:{backgroundColor:'rgba(11,9,32,0.96)',borderColor:'rgba(168,85,247,0.3)',borderWidth:1,
-          titleFont:{family:'Montserrat',size:12,weight:'700'},bodyFont:{family:'Montserrat',size:12},
-          padding:12,cornerRadius:8,
-          callbacks:{label:c=>{
-            const it=p.find(x=>x.faixa===faixas[c.dataIndex]&&x.genero===(c.datasetIndex===0?'female':'male'));
-            return `  ${num(c.parsed.y)} ${rotulo().toLowerCase()}${it?' · '+brl(it.investimento):''}`;}}}},
-      scales:{
-        x:{grid:{display:false},ticks:{color:'rgba(255,255,255,0.40)',font:{family:'Montserrat',size:11,weight:'600'}}},
-        y:{beginAtZero:true,grid:{color:'rgba(255,255,255,0.04)'},
-          ticks:{color:'rgba(255,255,255,0.30)',font:{family:'Montserrat',size:10},precision:0}}}}
-  });
 }
 
 /* ============================================================
