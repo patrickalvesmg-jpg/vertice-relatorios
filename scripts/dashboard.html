@@ -5,6 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Dashboard de Tráfego — Vértice Assessoria</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<!-- confete ao anotar contrato fechado (biblioteca de referencia do Patrick) -->
+<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.4/dist/confetti.browser.min.js" defer></script>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 <style>
 :root{
@@ -178,6 +180,7 @@ td.sub{padding-left:26px;}
 .tipo-g>div:first-child .tipo-v{color:var(--light);}
 .tipo-l{font-size:10.5px;font-weight:600;color:var(--text);margin-top:4px;line-height:1.35;}
 .tipo .kpi-d{margin-top:7px;}
+.tipo-x{font-size:11px;font-weight:500;color:var(--text2);line-height:1.45;margin-top:-2px;}
 .tipo-f{font-size:11px;font-weight:600;color:var(--text2);padding-top:11px;border-top:1px solid var(--border);}
 
 /* escolha do tipo no grafico */
@@ -188,6 +191,105 @@ td.sub{padding-left:26px;}
 .chip:hover{color:#fff;border-color:var(--border2);}
 .chip.on{background:rgba(168,85,247,0.22);border-color:transparent;color:#fff;}
 .chip:focus-visible{outline:2px solid var(--lilac);outline-offset:1px;}
+
+/* ---- Do WhatsApp ao contrato (registro diario) ---- */
+.hdr-r{display:flex;align-items:center;gap:10px;}
+.bt-anotar{padding:10px 16px;border:0;border-radius:10px;cursor:pointer;white-space:nowrap;
+  background:linear-gradient(135deg,var(--purple),var(--lilac));color:#fff;
+  font-family:'Montserrat',sans-serif;font-size:12.5px;font-weight:800;letter-spacing:.02em;}
+.bt-anotar:hover{filter:brightness(1.08);}
+.bt-anotar:focus-visible{outline:2px solid #fff;outline-offset:2px;}
+.vendas-h{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:-4px 0 14px;flex-wrap:wrap;}
+.vendas-h .card-s{margin:0;}
+.vendas-kpis{margin-bottom:16px;}
+.vendas-vazio{padding:28px;}
+.vv-t{font-size:16px;font-weight:800;margin-bottom:10px;}
+.vv-s{font-size:13px;line-height:1.65;color:var(--text2);font-weight:500;margin-top:6px;max-width:680px;}
+.vv-s b{color:#fff;}
+.fv-card{margin-bottom:16px;}
+.fv-linha{display:grid;grid-template-columns:minmax(150px,230px) 1fr 64px 170px;align-items:center;gap:14px;padding:10px 0;
+  border-bottom:1px solid rgba(255,255,255,0.04);}
+.fv-linha:last-child{border-bottom:0;}
+.fv-nome{font-size:13px;font-weight:700;}
+.fv-nome small{display:block;font-size:10.5px;font-weight:600;color:var(--text);margin-top:2px;line-height:1.35;}
+.fv-barra{height:10px;border-radius:5px;background:rgba(255,255,255,0.05);overflow:hidden;}
+.fv-fill{height:100%;border-radius:5px;background:var(--lilac);}
+.fv-num{font-size:18px;font-weight:800;text-align:right;}
+.fv-taxa{font-size:11px;font-weight:600;color:var(--text2);}
+.fv-taxa b{color:#fff;}
+.pj-card{margin-bottom:16px;}
+.pj-entrada{display:flex;align-items:flex-end;gap:14px;flex-wrap:wrap;margin:6px 0 16px;}
+.pj-entrada label{display:block;width:100%;font-size:11px;font-weight:700;color:var(--text2);margin-bottom:-6px;}
+.pj-campo{display:flex;align-items:center;gap:8px;padding:0 14px;border-radius:12px;
+  background:rgba(255,255,255,0.04);border:1px solid var(--border2);}
+.pj-campo span{font-weight:800;color:var(--text2);}
+.pj-campo input{width:150px;padding:12px 0;background:none;border:0;outline:none;color:#fff;
+  font-family:'Montserrat',sans-serif;font-size:20px;font-weight:800;}
+.pj-atalhos{display:flex;gap:6px;flex-wrap:wrap;}
+.pj-saida{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px;}
+.pj-l{background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:12px;padding:12px 14px;}
+.pj-l span{display:block;font-size:10.5px;font-weight:700;color:var(--text);text-transform:uppercase;letter-spacing:.06em;}
+.pj-l b{display:block;font-size:17px;font-weight:800;margin-top:6px;}
+.pj-l.pj-dest{border-color:rgba(168,85,247,0.45);background:rgba(168,85,247,0.07);}
+.pj-l.pj-dest b{color:var(--light);}
+.pj-nota{grid-column:1/-1;font-size:11px;color:var(--text2);font-weight:600;}
+
+/* formulario */
+.rg-fundo{position:fixed;inset:0;z-index:300;background:rgba(5,4,16,0.72);display:flex;
+  align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(4px);}
+.rg-fundo[hidden]{display:none;}
+.rg-caixa{width:100%;max-width:460px;max-height:92vh;overflow:auto;background:#130F33;
+  border:1px solid var(--border2);border-radius:20px;padding:20px 20px 22px;}
+.rg-topo{display:flex;align-items:center;justify-content:space-between;}
+.rg-titulo{font-size:17px;font-weight:800;}
+.rg-x{width:40px;height:40px;border:0;border-radius:10px;background:rgba(255,255,255,0.06);color:#fff;
+  font-size:22px;cursor:pointer;}
+.rg-dia{display:flex;align-items:center;gap:10px;margin:14px 0 6px;}
+.rg-seta{width:44px;height:44px;flex-shrink:0;border-radius:12px;border:1px solid var(--border2);
+  background:rgba(255,255,255,0.04);color:#fff;font-size:22px;cursor:pointer;}
+.rg-seta:disabled{opacity:.3;cursor:default;}
+.rg-dia-c{flex:1;text-align:center;}
+.rg-dia-t{font-size:14px;font-weight:800;}
+.rg-data{margin-top:4px;padding:4px 8px;border-radius:8px;border:1px solid rgba(168,85,247,0.18);
+  background:none;color:var(--text2);font-family:'Montserrat',sans-serif;font-size:11px;color-scheme:dark;}
+.rg-aviso{font-size:11.5px;font-weight:700;color:var(--yellow);text-align:center;min-height:16px;margin-bottom:6px;}
+.rg-campo{padding:12px 0;border-top:1px solid rgba(255,255,255,0.06);}
+.rg-campo label{display:block;font-size:13.5px;font-weight:800;}
+.rg-ajuda{font-size:11px;font-weight:500;color:var(--text2);margin:3px 0 9px;line-height:1.45;}
+.rg-passo{display:flex;align-items:center;gap:10px;}
+.rg-b{width:52px;height:52px;flex-shrink:0;border-radius:14px;border:1px solid var(--border2);
+  background:rgba(168,85,247,0.10);color:#fff;font-size:26px;font-weight:700;cursor:pointer;}
+.rg-b:active{background:rgba(168,85,247,0.3);}
+.rg-passo input,.rg-dinheiro input{flex:1;min-width:0;height:52px;text-align:center;border-radius:14px;
+  border:1px solid rgba(168,85,247,0.25);background:rgba(255,255,255,0.04);color:#fff;outline:none;
+  font-family:'Montserrat',sans-serif;font-size:24px;font-weight:800;}
+.rg-passo input::placeholder{font-size:14px;font-weight:600;color:var(--text);}
+.rg-passo input:focus,.rg-dinheiro input:focus{border-color:var(--lilac);}
+#rgCampoValor{display:none;}
+#rgCampoValor.on{display:block;}
+.rg-dinheiro{display:flex;align-items:center;gap:10px;}
+.rg-dinheiro span{font-size:18px;font-weight:800;color:var(--text2);}
+.rg-dinheiro input{text-align:left;padding:0 14px;}
+.rg-msg{font-size:12px;font-weight:700;min-height:18px;margin:10px 0 4px;}
+.rg-msg.erro{color:var(--red);}
+.rg-salvar{width:100%;height:54px;border:0;border-radius:14px;cursor:pointer;margin-top:4px;
+  background:linear-gradient(135deg,var(--purple),var(--lilac));color:#fff;
+  font-family:'Montserrat',sans-serif;font-size:15px;font-weight:800;}
+.rg-salvar:disabled{opacity:.6;cursor:default;}
+.toast{position:fixed;left:50%;bottom:24px;transform:translate(-50%,30px);opacity:0;z-index:400;
+  background:#15803d;color:#fff;font-size:13px;font-weight:800;padding:12px 18px;border-radius:12px;
+  transition:all .25s;pointer-events:none;}
+.toast.on{opacity:1;transform:translate(-50%,0);}
+
+/* glossario */
+.glossario{margin-top:22px;background:var(--card);border:1px solid var(--border);border-radius:14px;padding:14px 18px;}
+.glossario summary{cursor:pointer;font-size:12.5px;font-weight:700;color:var(--light);list-style:none;}
+.glossario summary::-webkit-details-marker{display:none;}
+.glossario summary::before{content:'? ';display:inline-block;width:20px;height:20px;line-height:20px;
+  text-align:center;border-radius:50%;background:rgba(168,85,247,0.2);margin-right:8px;font-weight:800;}
+.glossario dl{margin-top:12px;display:grid;grid-template-columns:minmax(160px,240px) 1fr;gap:10px 18px;}
+.glossario dt{font-size:12px;font-weight:800;}
+.glossario dd{font-size:12px;font-weight:500;color:var(--text2);line-height:1.55;}
 
 /* ---- Evolucao ---- */
 .evo-h{display:flex;justify-content:space-between;align-items:flex-start;gap:14px;flex-wrap:wrap;margin-bottom:6px;}
@@ -269,6 +371,15 @@ td.sub{padding-left:26px;}
   .kpi-v,.kpi.hero .kpi-v{font-size:22px;letter-spacing:-.4px;}
   .kpi{padding:16px 14px;}
   .kpi-d{font-size:10.5px;}
+  .hdr-r .bt-anotar{padding:9px 12px;font-size:12px;}
+  .fv-linha{grid-template-columns:1fr auto;gap:6px 12px;}
+  .fv-nome{grid-column:1;} .fv-num{grid-column:2;grid-row:1;}
+  .fv-barra{grid-column:1/-1;} .fv-taxa{grid-column:1/-1;}
+  .pj-campo input{width:120px;font-size:18px;}
+  .glossario dl{grid-template-columns:1fr;gap:4px;}
+  .glossario dd{margin-bottom:8px;}
+  .rg-fundo{align-items:flex-end;padding:0;}
+  .rg-caixa{border-radius:20px 20px 0 0;max-height:94vh;}
   .tipo{padding:16px;}
   .tipo-v{font-size:21px;}
   .tipo-l{font-size:11px;}
@@ -300,8 +411,34 @@ td.sub{padding-left:26px;}
       <div class="hdr-client" id="hClient">—</div>
       <div class="hdr-seg" id="hSeg"></div>
     </div>
-    <select class="hdr-sel" id="selCliente" onchange="trocarCliente(this.value)"></select>
+    <div class="hdr-r">
+      <button class="bt-anotar" id="btAnotar" type="button" hidden>✎ Anotar o dia</button>
+      <select class="hdr-sel" id="selCliente" onchange="trocarCliente(this.value)"></select>
+    </div>
   </div>
+
+  <!-- FORMULARIO "ANOTAR O DIA" (registro diario) -->
+  <div class="rg-fundo" id="regFundo" hidden>
+    <form class="rg-caixa" id="regForm" role="dialog" aria-modal="true" aria-labelledby="regTitulo" novalidate>
+      <div class="rg-topo">
+        <div class="rg-titulo" id="regTitulo">Anotar o dia</div>
+        <button type="button" class="rg-x" id="regFechar" aria-label="Fechar">×</button>
+      </div>
+      <div class="rg-dia">
+        <button type="button" class="rg-seta" id="regAnt" aria-label="Dia anterior">‹</button>
+        <div class="rg-dia-c">
+          <div class="rg-dia-t" id="regDiaTxt"></div>
+          <input type="date" id="regData" class="rg-data" aria-label="Escolher o dia">
+        </div>
+        <button type="button" class="rg-seta" id="regProx" aria-label="Próximo dia">›</button>
+      </div>
+      <div class="rg-aviso" id="regAviso"></div>
+      <div id="regCampos"></div>
+      <div class="rg-msg" id="regMsg" role="alert"></div>
+      <button type="submit" class="rg-salvar" id="regSalvar">Salvar o dia</button>
+    </form>
+  </div>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
   <div class="wrap">
     <!-- FILTRO -->
@@ -332,14 +469,39 @@ td.sub{padding-left:26px;}
          perfil, compra... O relatorio se adapta ao que roda na conta: com
          um tipo so, esta secao nao aparece e o topo mostra os 4 numeros. -->
     <div id="secTipos" style="display:none;">
-      <div class="sec-t">Resultados por tipo de campanha</div>
+      <div class="sec-t">O que cada tipo de anúncio trouxe</div>
       <div class="tipos" id="tipos"></div>
     </div>
+
+    <!-- DO WHATSAPP AO CONTRATO: o que o cliente anota por dia, cruzado com
+         o investimento (so para cliente com "registro": true). -->
+    <div id="secVendas" style="display:none;">
+      <div class="sec-t">Do WhatsApp ao contrato</div>
+      <div class="vendas-h">
+        <div class="card-s" id="vendasSub"></div>
+        <button class="bt-anotar" id="btAnotar2" type="button" hidden>✎ Anotar o dia</button>
+      </div>
+      <div id="vendasCorpo"></div>
+    </div>
+
+    <details class="glossario">
+      <summary>Não entendeu algum número? Toque aqui</summary>
+      <dl>
+        <dt>Investido em anúncios</dt><dd>Quanto foi pago à Meta (Facebook e Instagram) para mostrar os anúncios no período.</dd>
+        <dt>Pessoas que viram os anúncios</dt><dd>Quantas pessoas diferentes viram pelo menos um anúncio.</dd>
+        <dt>Conversas iniciadas</dt><dd>Pessoas que clicaram no anúncio e mandaram mensagem no WhatsApp ou no Direct.</dd>
+        <dt>Custo de cada conversa</dt><dd>O valor investido dividido pelo número de conversas. Ex.: R$ 100 investidos e 20 conversas = R$ 5 cada conversa.</dd>
+        <dt>Custo para conquistar cada cliente</dt><dd>O valor investido dividido pelos contratos fechados. É quanto o anúncio custou para trazer cada cliente novo.</dd>
+        <dt>Retorno do anúncio</dt><dd>Quanto voltou em contratos para cada R$ 1,00 colocado em anúncio. Ex.: R$ 8,00 quer dizer que cada real investido virou oito em contrato.</dd>
+        <dt>De cada 100 que chamaram</dt><dd>De cada 100 pessoas que mandaram mensagem, quantas chegaram àquela etapa (reunião, proposta, contrato).</dd>
+        <dt>▲ ▼</dt><dd>Se o número subiu ou caiu em relação ao mesmo número de dias logo antes. Verde é bom, vermelho é atenção.</dd>
+      </dl>
+    </details>
 
     <!-- EVOLUCAO: uma linha, uma metrica por vez. Substituiu o grafico de
          barras + linha com dois eixos, que o Patrick achou ruim — e dois
          eixos no mesmo grafico inventam correlacao que nao existe. -->
-    <div class="sec-t">Evolução no período</div>
+    <div class="sec-t">Dia a dia</div>
     <div class="card">
       <div class="evo-h">
         <div>
@@ -349,8 +511,8 @@ td.sub{padding-left:26px;}
         </div>
         <div class="seg" id="evoSeg" role="tablist" aria-label="Métrica do gráfico">
           <button class="seg-b on" data-m="res" role="tab">Resultados</button>
-          <button class="seg-b" data-m="inv" role="tab">Investimento</button>
-          <button class="seg-b" data-m="cpr" role="tab">Custo por resultado</button>
+          <button class="seg-b" data-m="inv" role="tab">Investido</button>
+          <button class="seg-b" data-m="cpr" role="tab">Custo de cada um</button>
         </div>
       </div>
       <div class="chart-box"><canvas id="chEvo" role="img"></canvas></div>
@@ -365,38 +527,20 @@ td.sub{padding-left:26px;}
          status seria o de agora. Uma campanha que rodou em junho e foi
          pausada em julho apareceria como "pausada" ao lado de um gasto,
          dando a impressao de que gasta pausada. -->
-    <div class="sec-t">Resultados por campanha</div>
+    <div class="sec-t">Resultado de cada campanha</div>
     <div class="card">
       <div class="tbl-wrap">
         <table id="tblCamp">
           <thead><tr>
             <th>Campanha</th>
-            <th class="num">Investimento</th>
+            <th class="num">Investido</th>
             <th class="num" id="thCampRes">Resultados</th>
-            <th class="num">Custo/result.</th>
+            <th class="num">Custo de cada um</th>
           </tr></thead>
           <tbody></tbody>
         </table>
       </div>
       <div class="aviso" id="avisoCamp"></div>
-    </div>
-
-    <!-- NEGOCIO (planilha do cliente) -->
-    <div id="secNegocio" style="display:none;">
-      <div class="sec-t">Do anúncio até a venda</div>
-      <div class="kpis" id="kpisNegocio" style="margin-bottom:16px;"></div>
-
-      <div class="card" style="margin-bottom:16px;">
-        <div class="card-t">Funil do período</div>
-        <div class="card-s">Cada etapa e quanto dela passou para a seguinte</div>
-        <div id="funil"></div>
-      </div>
-
-      <div class="card">
-        <div class="card-t">Faturamento e investimento por dia</div>
-        <div class="card-s" id="fatSub"></div>
-        <div class="chart-box"><canvas id="chFat"></canvas></div>
-      </div>
     </div>
 
     <div class="foot">
@@ -435,88 +579,6 @@ async function carregarJSON(c){
   return r.json();
 }
 
-/* ============================================================
-   PLANILHA DO CLIENTE (Google Sheets)
-   Lê pelo endpoint gviz, que serve planilha publicada como
-   "qualquer pessoa com o link". Sem token, sem backend.
-   ============================================================ */
-
-/* Aceita variacoes de nome de coluna — cada cliente escreve do seu jeito.
-   A primeira que casar vence. */
-const COLUNAS={
-  data:                   ['data','dia','date'],
-  leads_recebidos:        ['leads recebidos','leads','lead','leads recebidos no dia','contatos'],
-  contatos_atendidos:     ['contatos atendidos','atendidos','leads atendidos','respondidos'],
-  agendamentos:           ['agendamentos','agendados','agendamento','marcados'],
-  avaliacoes:             ['avaliacoes feitas','avaliacoes','avaliacao','consultas','comparecimentos'],
-  orcamentos_apresentados:['orcamentos apresentados','orcamentos','propostas','orcamento'],
-  orcamentos_fechados:    ['orcamentos fechados','fechados','vendas','venda','fechamentos'],
-  faturamento:            ['faturamento','valor','receita','valor fechado','valor vendido'],
-};
-
-/* tira acento e normaliza para casar cabecalho escrito de qualquer jeito */
-const normalizar=t=>String(t||'').trim().toLowerCase()
-  .normalize('NFD').replace(new RegExp('[\u0300-\u036f]','g'),'');
-
-/* '15/03/2026', '2026-03-15' ou Date do Sheets -> '2026-03-15' */
-function parseData(v,f){
-  if(v==null||v==='') return null;
-  // gviz manda Date(2026,2,15) — mes base zero
-  const m=String(v).match(/^Date\((\d+),(\d+),(\d+)/);
-  if(m) return `${m[1]}-${String(+m[2]+1).padStart(2,'0')}-${String(+m[3]).padStart(2,'0')}`;
-  const txt=String(f||v).trim();
-  const br=txt.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/);
-  if(br) return `${br[3]}-${br[2].padStart(2,'0')}-${br[1].padStart(2,'0')}`;
-  const iso=txt.match(/^(\d{4})-(\d{2})-(\d{2})/);
-  if(iso) return iso[0];
-  return null;
-}
-
-/* 'R$ 3.400,00' / '3400' / 3400 -> 3400 */
-function parseNumero(v,f){
-  if(v==null||v==='') return 0;
-  if(typeof v==='number') return v;
-  let t=String(f||v).replace(/[R$\s]/g,'');
-  if(t.includes(',')) t=t.replace(/\./g,'').replace(',','.');  // formato br
-  const n=parseFloat(t);
-  return isNaN(n)?0:n;
-}
-
-async function lerPlanilha(cfg){
-  const gid=cfg.gid_funil||'0';
-  const url=`https://docs.google.com/spreadsheets/d/${cfg.sheet_id}/gviz/tq?tqx=out:json&gid=${gid}`;
-  const r=await fetch(url);
-  if(!r.ok) throw new Error('planilha não acessível (HTTP '+r.status+')');
-  const txt=await r.text();
-  const json=JSON.parse(txt.replace(/^[^(]+\(/,'').replace(/\);?\s*$/,''));
-
-  const cols=(json.table?.cols||[]).map(c=>normalizar(c.label));
-  // mapeia campo -> indice da coluna
-  const idx={};
-  for(const [campo,nomes] of Object.entries(COLUNAS)){
-    const alvos=nomes.map(normalizar);
-    const i=cols.findIndex(c=>c&&alvos.includes(c));
-    if(i>=0) idx[campo]=i;
-  }
-  if(idx.data==null) throw new Error('a planilha precisa de uma coluna "Data"');
-
-  const linhas=[];
-  for(const row of (json.table?.rows||[])){
-    const c=row.c||[];
-    const data=parseData(c[idx.data]?.v,c[idx.data]?.f);
-    if(!data) continue;                    // pula linha sem data (rodape, vazio)
-    const o={data};
-    for(const campo of Object.keys(COLUNAS)){
-      if(campo==='data'||idx[campo]==null) continue;
-      o[campo]=parseNumero(c[idx[campo]]?.v,c[idx[campo]]?.f);
-    }
-    linhas.push(o);
-  }
-  linhas.sort((a,b)=>a.data.localeCompare(b.data));
-  if(!linhas.length) throw new Error('planilha sem linhas com data válida');
-  return linhas;
-}
-
 async function iniciar(){
   try{
     progresso(20,'LENDO CLIENTES');
@@ -531,22 +593,11 @@ async function iniciar(){
     DADOS=await carregarJSON(`${PASTA}/${cli.slug}.json`);
     DADOS._cfg=cli;
 
-    // planilha do cliente (opcional). Se falhar, o painel segue com os dados
-    // do gerenciador — nunca deixa a tela em branco por causa dela.
-    if(cli.planilha?.sheet_id){
-      progresso(72,'LENDO PLANILHA');
-      try{
-        DADOS.funil=await lerPlanilha(cli.planilha);
-      }catch(e){
-        console.warn('planilha não carregada:',e.message);
-        DADOS._erroPlanilha=e.message;
-      }
-    }
-
     progresso(85,'MONTANDO PAINEL');
     montarSeletor(ativos,cli.slug);
     montarCabecalho();
     prepararFiltro();
+    prepararRegistro();      // "Do WhatsApp ao contrato", so para quem tem registro
     aplicar('mes');          // abre no mes corrente, nao no historico todo
 
     progresso(100,'PRONTO');
@@ -586,7 +637,7 @@ async function atualizarDados(){
     const novo=await carregarJSON(`${PASTA}/${cli.slug}.json`);
     const antes=DADOS.periodo_disponivel?.atualizado_em;
     novo._cfg=cli;
-    if(DADOS.funil)novo.funil=DADOS.funil;
+    carregarRegistro();          // anotacoes feitas em outro aparelho
 
     const filtro={...FILTRO};
     DADOS=novo;
@@ -733,7 +784,7 @@ function render(){
   }else info=`${s.length} dias no período`;
   el('fInfo').textContent=info;
   renderKPIs(s); renderEvolucao(s);
-  renderCampanhas(); renderNegocio();
+  renderCampanhas(); renderVendas();
 }
 
 /* Produtos no periodo filtrado, montados a partir de campanhas_por_dia
@@ -809,7 +860,7 @@ function focoDoPeriodo(s){
   }
   // Com um tipo so, o resultado e o dele mas a tela se comporta como
   // conta de um produto (sem "x% do investimento", sem botoes de tipo).
-  return {multi:prods.length>1,id:p.id,nome:p.nome,rotulo:p.rotulo_resultado,
+  return {multi:prods.length>1,id:p.id,nome:p.nome,rotulo:p.rotulo_resultado,descricao:p.descricao,
     fatia:totalInv?p.investimento/totalInv:0,porDia,tipos:prods};
 }
 
@@ -888,7 +939,7 @@ function renderKPIs(s){
   const ant=periodoAnterior();
   let aInv=null,aRes=null,aCpr=null,txt='';
   if(ant){
-    txt=ant.dias===1?'vs dia anterior':`vs ${ant.dias} dias anteriores`;
+    txt=ant.dias===1?'em relação ao dia anterior':`em relação aos ${ant.dias} dias anteriores`;
     aInv=totaisFoco({},ant.de,ant.ate).investimento;
     const t=totaisFoco(f,ant.de,ant.ate);
     aRes=t.resultados; aCpr=t.resultados?t.investimento/t.resultados:null;
@@ -897,16 +948,16 @@ function renderKPIs(s){
   const roxo=()=> 'linear-gradient(90deg,var(--purple),var(--lilac))';
   const cards=[];
 
-  cards.push(`<div class="kpi"><div class="kpi-l">Investimento</div>
+  cards.push(`<div class="kpi"><div class="kpi-l">Investido em anúncios</div>
     <div class="kpi-v">${brl(inv)}</div>
-    <div class="kpi-f">${dias?brl(inv/dias)+' por dia':'—'}</div>
+    <div class="kpi-f">${dias?'pago à Meta no período · '+brl(inv/dias)+' por dia':'—'}</div>
     ${selo(inv,aInv,null,txt)}
     ${m.investimento_previsto&&mensal?barraMeta(inv,m.investimento_previsto,
       p=>p>100?'var(--yellow)':roxo(),'do previsto ('+brl(m.investimento_previsto)+')'):''}</div>`);
 
-  const cardAlcance=`<div class="kpi"><div class="kpi-l">Pessoas alcançadas</div>
+  const cardAlcance=`<div class="kpi"><div class="kpi-l">Pessoas que viram os anúncios</div>
     <div class="kpi-v">${num(alc)}</div>
-    <div class="kpi-f">${inteiro?'sem repetir pessoa':'soma dos dias · pode repetir pessoa'}</div></div>`;
+    <div class="kpi-f">${inteiro?'cada pessoa contada uma vez':'soma dos dias: a mesma pessoa pode contar mais de uma vez'}</div></div>`;
 
   if(f.multi){
     cards.push(cardAlcance);
@@ -920,22 +971,40 @@ function renderKPIs(s){
 
   cards.push(`<div class="kpi hero"><div class="kpi-l">${f.rotulo}</div>
     <div class="kpi-v">${num(res)}</div>
-    <div class="kpi-f">${f.multi
-      ? `${f.nome} · ${(f.fatia*100).toFixed(0)}% do investimento`
-      : (dias?(res/dias).toFixed(1).replace('.',',')+' por dia':'—')}</div>
+    <div class="kpi-f">${explicaTipo(f.id,f.descricao,f.rotulo)}${dias?' · '+(res/dias).toFixed(1).replace('.',',')+' por dia':''}</div>
     ${selo(res,aRes,true,txt)}
     ${!f.multi&&m.resultados_alvo&&mensal?barraMeta(res,m.resultados_alvo,
       p=>p>=100?'var(--green)':roxo(),'da meta ('+num(m.resultados_alvo)+')'):''}</div>`);
 
-  cards.push(`<div class="kpi"><div class="kpi-l">Custo por ${minusc(singular(f.rotulo))}</div>
+  cards.push(`<div class="kpi"><div class="kpi-l">Custo de cada ${minusc(singular(f.rotulo))}</div>
     <div class="kpi-v">${cpr?brl(cpr):'—'}</div>
     <div class="kpi-f">${!res?'nenhum resultado no período'
-      : f.multi?'só o investimento em '+f.nome
-      : (m.custo_por_resultado_alvo?'alvo: '+brl(m.custo_por_resultado_alvo):'investimento ÷ '+minusc(f.rotulo))}</div>
+      : (m.custo_por_resultado_alvo?'alvo: '+brl(m.custo_por_resultado_alvo)+' · ':'')
+        +'o investido dividido pelo número de '+minusc(f.rotulo)}</div>
     ${selo(cpr,aCpr,false,txt)}</div>`);
 
   cards.push(cardAlcance);
   el('kpis').innerHTML=cards.join('');
+}
+
+/* O que cada numero quer dizer, em portugues de quem nao e do marketing
+   (pedido do Patrick, 12/11/2026: "custo por conversa iniciada" sozinho
+   nao diz nada para o dono da empresa). Tipo sem frase aqui usa a
+   descricao que veio do gerador. */
+const EXPLICA={
+  mensagens:'pessoas que clicaram no anúncio e mandaram mensagem',
+  perfil:'pessoas que entraram no perfil do Instagram pelo anúncio',
+  cliques:'cliques no link do anúncio',
+  site:'pessoas que abriram a página do site pelo anúncio',
+  compras:'compras feitas no site depois do anúncio',
+  leads:'pessoas que deixaram o contato no formulário',
+  cadastros:'cadastros feitos no site',
+  video:'pessoas que assistiram o vídeo até o fim (ou 15 segundos)',
+  engajamento:'curtidas, comentários e compartilhamentos',
+  alcance:'pessoas que viram o anúncio',
+};
+function explicaTipo(id,descricao,rotuloTipo){
+  return EXPLICA[id]||descricao||minusc(rotuloTipo||'');
 }
 
 /* Um cartao por tipo de campanha. Clicar no cartao mostra aquele tipo no
@@ -964,10 +1033,11 @@ function renderTipos(tipos,invTotal,ant,txt){
         <div><div class="tipo-v">${num(p.resultados)}</div>
           <div class="tipo-l">${minusc(p.rotulo_resultado)}</div>${sR}</div>
         <div><div class="tipo-v">${cpr?brl(cpr):'—'}</div>
-          <div class="tipo-l">${cpr?'por '+unid:'nenhum resultado'}</div>${sC}</div>
+          <div class="tipo-l">${cpr?'custo de cada '+unid:'nenhum resultado ainda'}</div>${sC}</div>
       </div>
+      <div class="tipo-x">${explicaTipo(p.id,p.descricao,p.rotulo_resultado)}</div>
       <div class="tipo-f">${brl(p.investimento)} investidos · ${invTotal?(p.investimento/invTotal*100).toFixed(0):0}% do total${
-        (sR||sC)?`<br><span style="color:var(--text)">▲▼ comparado aos ${txt.replace('vs ','')}</span>`:''}</div>
+        (sR||sC)?`<br><span style="color:var(--text)">▲▼ ${txt}</span>`:''}</div>
     </button>`;
   }).join('');
 }
@@ -1051,8 +1121,8 @@ function renderEvolucao(s){
 
   const M={
     res:{titulo:`${f.rotulo} por ${unid}`, val:p=>p.res, dinheiro:false},
-    inv:{titulo:`Investimento por ${unid}`, val:p=>p.invConta, dinheiro:true},
-    cpr:{titulo:`Custo por ${resUnit}, por ${unid}`, val:p=>p.res?p.inv/p.res:null, dinheiro:true},
+    inv:{titulo:`Investido em anúncios por ${unid}`, val:p=>p.invConta, dinheiro:true},
+    cpr:{titulo:`Custo de cada ${resUnit}, por ${unid}`, val:p=>p.res?p.inv/p.res:null, dinheiro:true},
   }[EVO_M];
 
   el('evoT').textContent=M.titulo;
@@ -1122,11 +1192,11 @@ function renderEvolucao(s){
 function renderTabelaEvo(pts,f,semana){
   const t=el('tblEvo');
   t.querySelector('thead').innerHTML=`<tr><th>${semana?'Semana de':'Dia'}</th>
-    <th class="num">Investimento</th><th class="num">${f.rotulo}</th>
-    <th class="num">Custo por ${minusc(singular(f.rotulo))}</th></tr>`;
+    <th class="num">Investido</th><th class="num">${f.rotulo}</th>
+    <th class="num">Custo de cada ${minusc(singular(f.rotulo))}</th></tr>`;
   t.querySelector('tbody').innerHTML=[...pts].reverse().map(p=>`<tr>
     <td class="nome">${p.rot}</td>
-    <td class="num" data-r="Investimento">${brl(p.invConta)}</td>
+    <td class="num" data-r="Investido">${brl(p.invConta)}</td>
     <td class="num" data-r="${f.rotulo}">${num(p.res)}</td>
     <td class="num" data-r="Custo">${p.res?brl(p.inv/p.res):'—'}</td></tr>`).join('')
     ||`<tr><td colspan="4"><div class="vazio">Sem dados no período.</div></td></tr>`;
@@ -1188,9 +1258,9 @@ function renderCampanhas(){
       : num(res);
     return `<tr>
       <td class="nome${sub?' sub':''}">${x.nome}</td>
-      <td class="num" data-r="Investimento">${brl(inv)}</td>
+      <td class="num" data-r="Investido">${brl(inv)}</td>
       <td class="num" data-r="${misto?'Resultado':rotulo()}">${cel}</td>
-      <td class="num" data-r="Custo por resultado">${res&&inv>0?brl(inv/res):'—'}</td></tr>`;
+      <td class="num" data-r="Custo de cada um">${res&&inv>0?brl(inv/res):'—'}</td></tr>`;
   };
 
   /* Com produtos definidos, as campanhas ficam agrupadas por produto:
@@ -1215,124 +1285,385 @@ function renderCampanhas(){
       .map(x=>linha(x,false)).join('');
   }
   el('avisoCamp').textContent=DADOS.campanhas_por_dia
-    ? 'Cada campanha soma apenas os dias dentro do período filtrado. Campanha sem gasto no período não aparece.'
+    ? 'Cada campanha mostra só o que aconteceu nos dias do período escolhido lá em cima.'
     : 'Valores por campanha estimados para o período filtrado, rateados pela participação no investimento. Os totais no topo da página são exatos.';
 }
 
 /* ============================================================
-   NEGOCIO — dados da planilha do cliente cruzados com o trafego
-   ============================================================ */
+   DO WHATSAPP AO CONTRATO — registro diario do cliente
+   (12/11/2026; primeiro cliente: Vital Clean)
 
-/* etapas do funil, na ordem. 'chave' e o campo no JSON;
-   etapa sem nenhum numero preenchido some do painel. */
-const ETAPAS=[
-  {chave:'leads_recebidos',        nome:'Leads recebidos',   sub:'chegaram de fato'},
-  {chave:'contatos_atendidos',     nome:'Atendidos',         sub:'foram respondidos'},
-  {chave:'agendamentos',           nome:'Agendamentos',      sub:'marcaram horário'},
-  {chave:'avaliacoes',             nome:'Avaliações',        sub:'compareceram'},
-  {chave:'orcamentos_apresentados',nome:'Orçamentos',        sub:'receberam proposta'},
-  {chave:'orcamentos_fechados',    nome:'Fechados',          sub:'viraram venda'},
+   O cliente anota no proprio relatorio, um formulario por dia: mensagens
+   que chegaram, reunioes agendadas e feitas, propostas enviadas, contratos
+   fechados e o valor fechado. Fica no Supabase central (schema
+   "relatorio"), atras de duas funcoes que exigem a mesma chave que abre o
+   relatorio (ver relatorios-online/supabase/registro-diario.sql).
+
+   Regra das mensagens (pedido do Patrick): vale o numero anotado pelo
+   cliente, que e mais fiel; o dia sem anotacao usa o do Gerenciador.
+   ============================================================ */
+const REGISTRO_API={
+  url:'https://hyypvthzalzexhuwojjn.supabase.co/rest/v1/rpc/',
+  chave:'sb_publishable_hfAGLt_lgHC53E9gbuGUKw_xWbgWV1i',   // publica por design; a RLS e a chave do relatorio protegem
+};
+const REG={ligado:false,dias:{},carregado:false,erro:null};
+
+const ETAPAS_VENDA=[
+  {k:'mensagens',          nome:'Mensagens que chegaram', ajuda:'pessoas que chamaram no WhatsApp'},
+  {k:'reunioes_agendadas', nome:'Reuniões agendadas',     ajuda:'conversas que viraram reunião marcada'},
+  {k:'reunioes_feitas',    nome:'Reuniões feitas',        ajuda:'reuniões que aconteceram de verdade'},
+  {k:'propostas',          nome:'Propostas enviadas',     ajuda:'clientes que receberam proposta'},
+  {k:'contratos',          nome:'Contratos fechados',     ajuda:'clientes que assinaram'},
 ];
 
-function funilFiltrado(){
-  const f=DADOS.funil||[];
-  if(!FILTRO.de||!FILTRO.ate) return f;
-  const [de,ate]=FILTRO.de<=FILTRO.ate?[FILTRO.de,FILTRO.ate]:[FILTRO.ate,FILTRO.de];
-  return f.filter(x=>x.data>=de&&x.data<=ate);
+/* Data de hoje no relogio de quem preenche (hoje() usa UTC e viraria o
+   dia as 21h em Fortaleza). */
+function hojeLocal(){
+  const d=new Date();
+  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
 }
 
-function renderNegocio(){
-  const f=funilFiltrado();
-  if(!f.length) return;                 // sem planilha conectada, secao nao aparece
-  el('secNegocio').style.display='';
+function chaveDoRelatorio(){ try{ return sessionStorage.getItem('vertice_s'); }catch(e){ return null; } }
 
-  const s=serieFiltrada();
-  const inv=s.reduce((a,x)=>a+x.investimento,0);
-  const res=s.reduce((a,x)=>a+x.resultados,0);
-  const soma=k=>f.reduce((a,x)=>a+(Number(x[k])||0),0);
-  const fat=soma('faturamento');
+async function chamarRegistro(funcao,corpo){
+  const r=await fetch(REGISTRO_API.url+funcao,{method:'POST',
+    headers:{'Content-Type':'application/json',apikey:REGISTRO_API.chave,
+      'Content-Profile':'relatorio','Accept-Profile':'relatorio'},
+    body:JSON.stringify({p_slug:DADOS._cfg.slug,p_chave:chaveDoRelatorio(),...corpo})});
+  const txt=await r.text();
+  let j=null; try{ j=txt?JSON.parse(txt):null; }catch(e){}
+  if(!r.ok) throw new Error((j&&(j.message||j.hint))||('erro '+r.status));
+  return j;
+}
 
-  // etapas com algum numero — cliente que nao usa "avaliacoes" nao ve a linha
-  const etapas=ETAPAS.map(e=>({...e,valor:soma(e.chave)})).filter(e=>e.valor>0);
-  const leads=soma('leads_recebidos');
-  const fechados=soma('orcamentos_fechados');
+async function carregarRegistro(){
+  if(!REG.ligado) return;
+  if(!chaveDoRelatorio()){ REG.erro='sem-chave'; REG.carregado=true; renderVendas(); return; }
+  try{
+    const linhas=await chamarRegistro('ler_dias',{});
+    REG.dias=Object.fromEntries((linhas||[]).map(l=>[String(l.data).slice(0,10),l]));
+    REG.erro=null;
+  }catch(e){
+    REG.erro=e.message; console.warn('registro diario:',e.message);
+  }
+  REG.carregado=true;
+  renderVendas();
+}
 
-  /* --- indicadores que so existem cruzando as duas fontes --- */
-  const item=(l,v,sub)=>`<div class="kpi">
-    <div class="kpi-l">${l}</div><div class="kpi-v" style="font-size:27px;">${v}</div>
-    ${sub?`<div class="kpi-f">${sub}</div>`:''}</div>`;
+/* Conversas do Gerenciador por dia (usadas so nos dias sem anotacao). */
+function mensagensDoGerenciador(){
+  const porDia={};
+  for(const l of DADOS.campanhas_por_dia||[])
+    if(l.grupo==='mensagens') porDia[l.data]=(porDia[l.data]||0)+l.resultados;
+  return porDia;
+}
 
-  const cards=[];
-  if(fat) cards.push(item('Faturamento',brl(fat),
-    fechados?brl(fat/fechados)+' de ticket médio':''));
-  if(fat&&inv) cards.push(item('Retorno sobre o investimento',
-    (fat/inv).toFixed(2).replace('.',',')+'x',
-    `${brl(inv)} investidos`));
-  if(leads&&inv) cards.push(item('Custo por lead real',brl(inv/leads),
-    res?`gerenciador marcou ${num(res)}`:''));
-  if(fechados&&inv) cards.push(item('Custo por venda',brl(inv/fechados),
-    `${num(fechados)} ${fechados===1?'venda':'vendas'}`));
-  el('kpisNegocio').innerHTML=cards.join('');
+function numerosDeVenda(){
+  const [de,ate]=FILTRO.de<=FILTRO.ate?[FILTRO.de,FILTRO.ate]:[FILTRO.ate,FILTRO.de];
+  const ger=mensagensDoGerenciador();
+  const t={mensagens:0,msgAnotadas:0,msgGerenciador:0,diasAnotados:0,
+    reunioes_agendadas:0,reunioes_feitas:0,propostas:0,contratos:0,valor:0};
+  for(let d=de; d<=ate; d=addDias(d,1)){
+    const r=REG.dias[d];
+    if(r){
+      t.diasAnotados++;
+      for(const k of ['reunioes_agendadas','reunioes_feitas','propostas','contratos']) t[k]+=Number(r[k]||0);
+      t.valor+=Number(r.valor||0);
+    }
+    if(r&&r.mensagens!=null){ t.mensagens+=Number(r.mensagens); t.msgAnotadas+=Number(r.mensagens); }
+    else{ const g=ger[d]||0; t.mensagens+=g; t.msgGerenciador+=g; }
+  }
+  t.investimento=serieFiltrada().reduce((a,x)=>a+x.investimento,0);
+  t.dias=Math.round((new Date(ate+'T12:00:00')-new Date(de+'T12:00:00'))/864e5)+1;
+  return t;
+}
 
-  /* --- funil: largura proporcional ao topo, taxa vs etapa anterior --- */
-  const topo=etapas.length?etapas[0].valor:0;
-  const cores=['#A855F7','#9333EA','#7C3AED','#6B21E8','#5B21B6','#4C1D95'];
-  el('funil').innerHTML=etapas.map((e,i)=>{
-    const larg=topo?Math.max(6,(e.valor/topo)*100):0;
-    const ant=i>0?etapas[i-1].valor:null;
-    const taxa=ant?((e.valor/ant)*100):null;
-    return `<div class="fn-linha">
-      <div class="fn-nome">${e.nome}<small>${e.sub}</small></div>
-      <div class="fn-track">
-        <div class="fn-fill" style="width:${larg}%;background:${cores[i%cores.length]}">${num(e.valor)}</div>
-      </div>
-      <div class="fn-taxa">${taxa!==null?`<b>${taxa.toFixed(0)}%</b> da anterior`:''}</div>
+const deCada100=(parte,todo)=>todo?Math.round(parte/todo*100):0;
+
+function renderVendas(){
+  const sec=el('secVendas');
+  if(!REG.ligado){ sec.style.display='none'; return; }
+  sec.style.display='';
+  const corpo=el('vendasCorpo');
+  const podeAnotar=REG.erro!=='sem-chave';
+  el('btAnotar').hidden=!podeAnotar; el('btAnotar2').hidden=!podeAnotar;
+
+  if(!REG.carregado){ corpo.innerHTML='<div class="card"><div class="vazio">Carregando as anotações…</div></div>'; return; }
+  if(REG.erro==='sem-chave'){
+    el('vendasSub').textContent='';
+    corpo.innerHTML='<div class="card"><div class="vazio">Para ver e anotar os números de venda, abra o relatório pelo link de acesso.</div></div>';
+    return;
+  }
+  if(REG.erro){
+    el('vendasSub').textContent='';
+    corpo.innerHTML='<div class="card"><div class="vazio">Não deu para carregar as anotações agora. Atualize a página em alguns minutos.</div></div>';
+    return;
+  }
+
+  const t=numerosDeVenda();
+  el('vendasSub').textContent=t.diasAnotados
+    ? `${t.diasAnotados} ${t.diasAnotados===1?'dia anotado':'dias anotados'} no período escolhido`
+    : 'Nenhum dia anotado neste período';
+
+  if(!t.diasAnotados){
+    corpo.innerHTML=`<div class="card vendas-vazio">
+      <div class="vv-t">Comece anotando o dia de hoje</div>
+      <div class="vv-s">Uma vez por dia, toque em <b>Anotar o dia</b> e coloque quantas mensagens chegaram,
+        quantas reuniões, propostas e contratos. Leva menos de um minuto.</div>
+      <div class="vv-s">Com isso, este relatório passa a mostrar <b>quanto custou conquistar cada cliente</b>,
+        <b>quanto voltou de cada real investido</b> e <b>uma projeção de vendas</b>.</div>
+    </div>`;
+    return;
+  }
+
+  corpo.innerHTML=cartoesDinheiro(t)+cartaoFunil(t)+cartaoProjecao(t);
+  ligarProjecao(t);
+}
+
+function cartoesDinheiro(t){
+  const c=[];
+  const card=(rot,val,sub,hero)=>`<div class="kpi ${hero?'hero':''}"><div class="kpi-l">${rot}</div>
+    <div class="kpi-v">${val}</div><div class="kpi-f">${sub}</div></div>`;
+  c.push(card('Valor fechado em contratos',brl(t.valor),
+    `${num(t.contratos)} ${t.contratos===1?'contrato fechado':'contratos fechados'} no período`,true));
+  c.push(card('Custo para conquistar cada cliente',t.contratos&&t.investimento?brl(t.investimento/t.contratos):'—',
+    t.contratos?'o que foi investido em anúncio dividido pelos contratos fechados':'aparece quando houver contrato fechado'));
+  c.push(card('Retorno do anúncio',t.investimento&&t.valor?brl(t.valor/t.investimento):'—',
+    t.investimento&&t.valor?'em contrato para cada R$ 1,00 investido em anúncio':'aparece quando houver valor fechado'));
+  c.push(card('Valor médio de cada contrato',t.contratos?brl(t.valor/t.contratos):'—',
+    t.contratos?'quanto vale, em média, cada cliente que fechou':'aparece quando houver contrato fechado'));
+  return `<div class="kpis vendas-kpis">${c.join('')}</div>`;
+}
+
+function cartaoFunil(t){
+  const topo=t.mensagens||0;
+  let origem='';
+  if(t.msgAnotadas&&t.msgGerenciador) origem=`${num(t.msgAnotadas)} anotadas por vocês + ${num(t.msgGerenciador)} do Gerenciador (dias sem anotação)`;
+  else if(t.msgGerenciador) origem='número do Gerenciador de Anúncios — anote as mensagens para ficar mais preciso';
+  else if(t.msgAnotadas) origem='anotadas por vocês';
+
+  const linhas=ETAPAS_VENDA.map((e,i)=>{
+    const v=t[e.k]||0;
+    const larg=topo?Math.max(v?3:0,Math.min(100,v/topo*100)):0;
+    const taxa=i===0?'':(topo?`<b>${deCada100(v,topo)}</b> de cada 100 que chamaram`:'');
+    return `<div class="fv-linha">
+      <div class="fv-nome">${e.nome}<small>${i===0&&origem?origem:e.ajuda}</small></div>
+      <div class="fv-barra"><div class="fv-fill" style="width:${larg}%"></div></div>
+      <div class="fv-num">${num(v)}</div>
+      <div class="fv-taxa">${taxa}</div>
     </div>`;
   }).join('');
 
-  renderFaturamento(f,s);
+  const custoMsg=t.mensagens&&t.investimento?brl(t.investimento/t.mensagens):null;
+  return `<div class="card fv-card">
+    <div class="card-t">O caminho de quem chamou até fechar</div>
+    <div class="card-s">${custoMsg?`Cada mensagem custou ${custoMsg} em anúncio. `:''}De cada 100 pessoas que chamaram, ${deCada100(t.contratos,topo)} fecharam contrato.</div>
+    ${linhas}
+  </div>`;
 }
 
-function renderFaturamento(f,s){
-  el('fatSub').textContent=f.length
-    ?`De ${diaCurto(f[0].data)} a ${diaCurto(f[f.length-1].data)} — escalas diferentes: faturamento à esquerda, investimento à direita`:'';
-  CHARTS.fat?.destroy();
-  if(!f.length) return;
-  const poucos=f.length<=3;
-  // investimento vem da serie de trafego, casado por data
-  const invPorDia=Object.fromEntries(s.map(x=>[x.data,x.investimento]));
+/* ---------- Projecao ----------
+   Regra de tres com o que aconteceu no periodo escolhido: custo de cada
+   mensagem, quantas viraram cada etapa e o valor medio do contrato. */
+function cartaoProjecao(t){
+  if(!t.mensagens||!t.investimento) return '';
+  const ritmo=Math.max(50,Math.round(t.investimento/t.dias*30/50)*50);
+  return `<div class="card pj-card">
+    <div class="card-t">Projeção: e se investir mais?</div>
+    <div class="card-s">Mude o valor e veja quanto dá para esperar, pelo que aconteceu até agora.</div>
+    <div class="pj-entrada">
+      <label for="pjValor">Investindo por mês em anúncio</label>
+      <div class="pj-campo"><span>R$</span><input id="pjValor" type="text" inputmode="numeric" value="${num(ritmo)}" aria-describedby="pjDica"></div>
+      <div class="pj-atalhos">
+        <button class="chip" data-pj="${ritmo}">ritmo atual</button>
+        <button class="chip" data-pj="${Math.round(ritmo*1.5/50)*50}">+50%</button>
+        <button class="chip" data-pj="${ritmo*2}">o dobro</button>
+      </div>
+    </div>
+    <div class="pj-saida" id="pjSaida"></div>
+    <div class="aviso" id="pjDica">É uma estimativa feita com o período escolhido lá em cima: quanto custou cada mensagem e quantas viraram contrato.
+      Quanto mais dias anotados, mais certeira. Investir o dobro nem sempre traz o dobro: o custo de cada mensagem costuma subir um pouco.</div>
+  </div>`;
+}
 
-  CHARTS.fat=new Chart(el('chFat'),{
-    data:{labels:f.map(x=>diaCurto(x.data)),datasets:[
-      {type:'bar',label:'Faturamento',data:f.map(x=>x.faturamento||0),
-       backgroundColor:'rgba(74,222,128,0.35)',borderColor:'rgba(74,222,128,0.7)',
-       borderWidth:1,borderRadius:3,yAxisID:'y',order:2,
-       ...(poucos?{barThickness:56}:{maxBarThickness:44})},
-      {type:'line',label:'Investimento',data:f.map(x=>invPorDia[x.data]||0),
-       borderColor:'#A855F7',backgroundColor:'rgba(168,85,247,0.06)',
-       borderWidth:2,pointRadius:poucos?5:0,pointHoverRadius:5,
-       pointBackgroundColor:'#A855F7',pointBorderColor:'rgba(11,9,32,0.9)',pointBorderWidth:2,
-       tension:.35,fill:!poucos,yAxisID:'y1',order:1},
-    ]},
-    options:{responsive:true,maintainAspectRatio:false,
-      interaction:{mode:'index',intersect:false},
-      plugins:{
-        legend:{labels:{color:'rgba(255,255,255,0.55)',font:{family:'Montserrat',size:11,weight:'600'},
-          usePointStyle:true,pointStyle:'circle',padding:16}},
-        tooltip:{backgroundColor:'rgba(11,9,32,0.96)',borderColor:'rgba(168,85,247,0.3)',borderWidth:1,
-          titleFont:{family:'Montserrat',size:12,weight:'700'},bodyFont:{family:'Montserrat',size:12},
-          padding:12,cornerRadius:8,
-          callbacks:{label:c=>'  '+c.dataset.label+': '+brl(c.parsed.y)}}},
-      scales:{
-        x:{grid:{display:false},ticks:{color:'rgba(255,255,255,0.30)',font:{family:'Montserrat',size:9},
-          maxRotation:0,autoSkip:true,maxTicksLimit:14}},
-        // eixos separados: o faturamento costuma ser uma ordem de grandeza maior
-        // que o investimento; no mesmo eixo a linha roxa fica colada no zero.
-        y:{position:'left',beginAtZero:true,grid:{color:'rgba(255,255,255,0.04)'},
-          ticks:{color:'rgba(74,222,128,0.55)',font:{family:'Montserrat',size:10},callback:v=>brlCurto(v)}},
-        y1:{position:'right',beginAtZero:true,grid:{display:false},
-          ticks:{color:'rgba(168,85,247,0.6)',font:{family:'Montserrat',size:10},callback:v=>brlCurto(v)}}}}
+function ligarProjecao(t){
+  const inp=el('pjValor');
+  if(!inp) return;
+  const calc=()=>{
+    const v=Number(String(inp.value).replace(/\D/g,''))||0;
+    const msgs=v/(t.investimento/t.mensagens);
+    const taxa=k=>t.mensagens?t[k]/t.mensagens:0;
+    const aprox=n=>n<0.5&&n>0?'menos de 1':'cerca de '+num(Math.round(n));
+    const linhas=[
+      ['Mensagens no WhatsApp',aprox(msgs)],
+      ['Reuniões agendadas',aprox(msgs*taxa('reunioes_agendadas'))],
+      ['Propostas enviadas',aprox(msgs*taxa('propostas'))],
+      ['Contratos fechados',t.contratos?aprox(msgs*taxa('contratos')):'—'],
+      ['Valor em contratos',t.contratos?'cerca de '+brl(Math.round(msgs*taxa('contratos')*(t.valor/t.contratos))):'—'],
+    ];
+    el('pjSaida').innerHTML=linhas.map(([n,x],i)=>`<div class="pj-l ${i===linhas.length-1?'pj-dest':''}">
+      <span>${n}</span><b>${x}</b></div>`).join('')
+      +(t.contratos?'':`<div class="pj-nota">Contratos e valor aparecem quando houver pelo menos 1 contrato fechado anotado no período.</div>`);
+  };
+  inp.addEventListener('input',()=>{
+    const d=String(inp.value).replace(/\D/g,'');
+    inp.value=d?num(Number(d)):''; calc();
   });
+  el('pjSaida').closest('.pj-card').querySelectorAll('[data-pj]').forEach(b=>
+    b.addEventListener('click',()=>{ inp.value=num(Number(b.dataset.pj)); calc(); }));
+  calc();
+}
+
+/* ============================================================
+   FORMULARIO "ANOTAR O DIA"
+   Um dia por vez. Abre no dia de hoje; as setas trocam o dia (para
+   corrigir ou anotar um dia esquecido). Dia que ja tem anotacao abre
+   preenchido. Botoes de + e - grandes: da para preencher so com o polegar.
+   ============================================================ */
+const CAMPOS_DIA=[
+  {k:'mensagens',          nome:'Mensagens que chegaram no WhatsApp', ajuda:'Quantas pessoas novas chamaram. Se não contou, deixe vazio: usamos o número do Gerenciador.', vazio:true},
+  {k:'reunioes_agendadas', nome:'Reuniões agendadas',  ajuda:'Reuniões marcadas neste dia.'},
+  {k:'reunioes_feitas',    nome:'Reuniões feitas',     ajuda:'Reuniões que aconteceram neste dia.'},
+  {k:'propostas',          nome:'Propostas enviadas',  ajuda:'Propostas ou contratos mandados para o cliente.'},
+  {k:'contratos',          nome:'Contratos fechados',  ajuda:'Clientes que assinaram neste dia.'},
+];
+let REG_DIA=null, REG_FOCO_ANTES=null;
+
+function nomeDoDia(iso){
+  const h=hojeLocal();
+  const dt=new Date(iso+'T12:00:00');
+  const sem=dt.toLocaleDateString('pt-BR',{weekday:'long'});
+  const dm=diaCurto(iso);
+  if(iso===h) return `Hoje · ${sem}, ${dm}`;
+  if(iso===addDias(h,-1)) return `Ontem · ${sem}, ${dm}`;
+  return `${sem.charAt(0).toUpperCase()+sem.slice(1)}, ${dm}`;
+}
+
+function montarFormulario(){
+  el('regCampos').innerHTML=CAMPOS_DIA.map(c=>`<div class="rg-campo">
+      <label for="rg_${c.k}">${c.nome}</label>
+      <div class="rg-ajuda">${c.ajuda}</div>
+      <div class="rg-passo">
+        <button type="button" class="rg-b" data-k="${c.k}" data-d="-1" aria-label="Diminuir ${c.nome}">−</button>
+        <input id="rg_${c.k}" type="text" inputmode="numeric" autocomplete="off" ${c.vazio?'placeholder="vazio"':''}>
+        <button type="button" class="rg-b" data-k="${c.k}" data-d="1" aria-label="Aumentar ${c.nome}">+</button>
+      </div>
+    </div>`).join('')+`<div class="rg-campo" id="rgCampoValor">
+      <label for="rg_valor">Valor total dos contratos fechados</label>
+      <div class="rg-ajuda">Some o valor de todos os contratos assinados neste dia.</div>
+      <div class="rg-dinheiro"><span>R$</span><input id="rg_valor" type="text" inputmode="decimal" autocomplete="off" placeholder="0,00"></div>
+    </div>`;
+
+  el('regCampos').addEventListener('click',e=>{
+    const b=e.target.closest('.rg-b'); if(!b) return;
+    const inp=el('rg_'+b.dataset.k);
+    const atual=inp.value===''?null:Number(inp.value)||0;
+    const novo=atual===null?(Number(b.dataset.d)>0?1:null):Math.max(0,atual+Number(b.dataset.d));
+    inp.value=novo===null?'':String(novo);
+    if(b.dataset.k==='contratos') mostrarValor();
+  });
+  el('regCampos').addEventListener('input',e=>{
+    if(e.target.id==='rg_valor'){ e.target.value=e.target.value.replace(/[^\d,.]/g,''); return; }
+    if(e.target.id&&e.target.id.startsWith('rg_')) e.target.value=e.target.value.replace(/\D/g,'').slice(0,6);
+    if(e.target.id==='rg_contratos') mostrarValor();
+  });
+}
+
+function mostrarValor(){
+  const c=Number(el('rg_contratos').value)||0;
+  el('rgCampoValor').classList.toggle('on',c>0||el('rg_valor').value!=='');
+}
+
+function carregarDiaNoFormulario(dia){
+  REG_DIA=dia;
+  el('regDiaTxt').textContent=nomeDoDia(dia);
+  el('regData').value=dia;
+  el('regProx').disabled=dia>=hojeLocal();
+  const r=REG.dias[dia];
+  el('regAviso').textContent=r?'Este dia já tem anotação. Você está corrigindo.':'';
+  for(const c of CAMPOS_DIA){
+    const v=r?r[c.k]:null;
+    el('rg_'+c.k).value=v==null?(c.vazio?'':'0'):String(v);
+  }
+  el('rg_valor').value=r&&Number(r.valor)?Number(r.valor).toLocaleString('pt-BR',{minimumFractionDigits:2}):'';
+  el('regMsg').textContent=''; el('regMsg').className='rg-msg';
+  mostrarValor();
+}
+
+function abrirFormulario(){
+  REG_FOCO_ANTES=document.activeElement;
+  carregarDiaNoFormulario(hojeLocal());
+  el('regFundo').hidden=false;
+  document.body.style.overflow='hidden';
+  setTimeout(()=>el('rg_mensagens').focus(),50);
+}
+function fecharFormulario(){
+  el('regFundo').hidden=true;
+  document.body.style.overflow='';
+  if(REG_FOCO_ANTES&&REG_FOCO_ANTES.focus) REG_FOCO_ANTES.focus();
+}
+
+function lerValorReais(t){
+  t=String(t||'').trim(); if(!t) return 0;
+  if(t.includes(',')) t=t.replace(/\./g,'').replace(',','.');
+  const n=Number(t); return isNaN(n)?NaN:n;
+}
+
+async function salvarDia(){
+  const msg=el('regMsg');
+  const val={};
+  for(const c of CAMPOS_DIA){
+    const v=el('rg_'+c.k).value.trim();
+    val[c.k]=v===''?(c.vazio?null:0):Number(v);
+  }
+  const valor=lerValorReais(el('rg_valor').value);
+  if(isNaN(valor)){ msg.textContent='O valor ficou estranho. Escreva só números, por exemplo 1500 ou 1.500,00.'; msg.className='rg-msg erro'; return; }
+  if(val.contratos>0&&!(valor>0)){ msg.textContent='Coloque o valor total dos contratos fechados.'; msg.className='rg-msg erro'; el('rg_valor').focus(); return; }
+  if(valor>0&&!val.contratos){ msg.textContent='Tem valor, mas nenhum contrato fechado. Confira o número de contratos.'; msg.className='rg-msg erro'; el('rg_contratos').focus(); return; }
+
+  const bt=el('regSalvar'); bt.disabled=true; bt.textContent='Salvando…'; msg.textContent=''; msg.className='rg-msg';
+  try{
+    const r=await chamarRegistro('salvar_dia',{p_data:REG_DIA,p_mensagens:val.mensagens,
+      p_reunioes_agendadas:val.reunioes_agendadas,p_reunioes_feitas:val.reunioes_feitas,
+      p_propostas:val.propostas,p_contratos:val.contratos,p_valor:valor});
+    REG.dias[REG_DIA]=r||{data:REG_DIA,...val,valor};
+    fecharFormulario();
+    renderVendas();
+    if(val.contratos>0){
+      avisoRapido(val.contratos===1?'Contrato fechado anotado! O relatório já está atualizado.'
+        :`${val.contratos} contratos fechados anotados! O relatório já está atualizado.`);
+      // comemoracao discreta; quem pediu menos movimento no aparelho nao ve
+      if(typeof confetti==='function'&&!matchMedia('(prefers-reduced-motion: reduce)').matches)
+        confetti({particleCount:90,spread:70,origin:{y:0.75},colors:['#A855F7','#C4B5FD','#4ade80','#ffffff']});
+    }else avisoRapido('Salvo! O relatório já está atualizado.');
+  }catch(e){
+    msg.textContent='Não deu para salvar ('+e.message+'). Confira a internet e tente de novo.';
+    msg.className='rg-msg erro';
+  }finally{
+    bt.disabled=false; bt.textContent='Salvar o dia';
+  }
+}
+
+function avisoRapido(t){
+  const a=el('toast'); a.textContent=t; a.classList.add('on');
+  clearTimeout(avisoRapido._t); avisoRapido._t=setTimeout(()=>a.classList.remove('on'),3200);
+}
+
+function prepararRegistro(){
+  REG.ligado=!!DADOS._cfg.registro;
+  if(!REG.ligado) return;
+  montarFormulario();
+  for(const id of ['btAnotar','btAnotar2']) el(id).addEventListener('click',abrirFormulario);
+  el('regFechar').addEventListener('click',fecharFormulario);
+  el('regFundo').addEventListener('click',e=>{ if(e.target===el('regFundo')) fecharFormulario(); });
+  document.addEventListener('keydown',e=>{ if(e.key==='Escape'&&!el('regFundo').hidden) fecharFormulario(); });
+  el('regAnt').addEventListener('click',()=>carregarDiaNoFormulario(addDias(REG_DIA,-1)));
+  el('regProx').addEventListener('click',()=>{ if(REG_DIA<hojeLocal()) carregarDiaNoFormulario(addDias(REG_DIA,1)); });
+  el('regData').max=hojeLocal();
+  el('regData').addEventListener('change',e=>{ const v=e.target.value; if(v&&v<=hojeLocal()) carregarDiaNoFormulario(v); });
+  el('regForm').addEventListener('submit',e=>{ e.preventDefault(); salvarDia(); });
+  renderVendas();
+  carregarRegistro();
 }
 
 iniciar();

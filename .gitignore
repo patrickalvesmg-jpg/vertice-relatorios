@@ -21,3 +21,7 @@ node_modules/
 *.log
 .DS_Store
 Thumbs.db
+
+# Linha de acesso do registro diario (hash da senha do cliente)
+supabase/acessos.sql
+supabase/colar-no-supabase.sql

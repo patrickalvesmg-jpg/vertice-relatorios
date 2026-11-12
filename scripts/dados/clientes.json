@@ -1,7 +1,6 @@
 {
   "_leia_me": "Indice de clientes do dashboard de trafego da Vertice. Para adicionar um cliente novo: crie o objeto aqui e gere o arquivo dados/<slug>.json no formato de _EXEMPLO-cliente.json. O dashboard le este indice sozinho — nao precisa mexer no HTML.",
   "_atualizado_em": "2026-11-12",
-
   "clientes": [
     {
       "slug": "cfc-academy",
@@ -24,7 +23,8 @@
       "rotulo_resultado": "Conversas iniciadas",
       "cor_destaque": null,
       "logo": null,
-      "meta_ad_account_id": "act_464010796779854"
+      "meta_ad_account_id": "act_464010796779854",
+      "registro": true
     },
     {
       "slug": "cliente-exemplo",
@@ -38,7 +38,6 @@
       "meta_ad_account_id": "act_000000000000000"
     }
   ],
-
   "_objetivos_suportados": {
     "conversas": "Conversas iniciadas",
     "leads": "Leads gerados",
