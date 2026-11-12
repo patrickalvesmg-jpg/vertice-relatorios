@@ -1,6 +1,6 @@
 {
   "_leia_me": "Indice de clientes do dashboard de trafego da Vertice. Para adicionar um cliente novo: crie o objeto aqui e gere o arquivo dados/<slug>.json no formato de _EXEMPLO-cliente.json. O dashboard le este indice sozinho — nao precisa mexer no HTML.",
-  "_atualizado_em": "2026-08-06",
+  "_atualizado_em": "2026-11-12",
 
   "clientes": [
     {
@@ -13,6 +13,18 @@
       "cor_destaque": null,
       "logo": null,
       "meta_ad_account_id": "act_530764754757626"
+    },
+    {
+      "slug": "vital-clean",
+      "nome": "Vital Clean Nordeste",
+      "segmento": "Higiene profissional",
+      "ativo": true,
+      "senha_propria": true,
+      "objetivo": "conversas",
+      "rotulo_resultado": "Conversas iniciadas",
+      "cor_destaque": null,
+      "logo": null,
+      "meta_ad_account_id": "act_464010796779854"
     },
     {
       "slug": "cliente-exemplo",

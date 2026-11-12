@@ -1,5 +1,5 @@
 // Gera o JSON de um cliente no formato do dashboard de trafego da Vertice.
-// Saida: Projetos/vertice/dashboards/trafego/dados/<slug>.json
+// Saida: Projetos/vertice/sistemas/dashboard-trafego/dados/<slug>.json
 //
 // Uso: node src/gerar-dados-dashboard.js <slug>
 //      node src/gerar-dados-dashboard.js cfc-academy
@@ -10,6 +10,7 @@
 const fs = require('fs');
 const path = require('path');
 const meta = require('./meta-client');
+const { criarColeta } = require('./coleta-cfc');
 
 // ---------------------------------------------------------------
 // Clientes configurados. Para adicionar outro, crie uma entrada
@@ -27,16 +28,48 @@ const CLIENTES = {
     acao_resultado: 'purchase',
     // Quantos meses de historico puxar.
     meses: 6,
+    // Recorte do painel operacional (criativos/grupos): 2 meses.
+    meses_operacional: 2,
+    // Grupos que tambem mostram criativos PAUSADOS (com gasto no periodo).
+    // O CFC Express esta fora do ar, mas saber qual criativo vendeu
+    // melhor orienta a proxima rodada — pedido do Patrick em 21/08/2026.
+    criativos_historicos: ['cfc-express'],
+    // Mapa de produto (grupos de campanha) desta conta.
+    grupos: './grupos-cfc',
     metas: {
       investimento_previsto: 4000,
       custo_por_resultado_alvo: 40,
       resultados_alvo: 80,
     },
   },
+  'vital-clean': {
+    slug: 'vital-clean',
+    nome: 'Vital Clean Nordeste',
+    segmento: 'Higiene profissional',
+    conta: 'act_464010796779854',
+    objetivo: 'conversas',
+    rotulo_resultado: 'Conversas iniciadas',
+    // Mesma metrica da coluna "Resultados" do Gerenciador nas campanhas
+    // de mensagem, que sao as que estao no ar.
+    acao_resultado: 'onsite_conversion.messaging_conversation_started_7d',
+    // O relatorio comeca no inicio do contrato com a Vertice. Antes disso
+    // a conta foi gerida por outra agencia, e misturar os dois periodos
+    // no mesmo painel confundiria o Douglas.
+    desde: '2026-11-06',
+    meses: 6,
+    criativos_historicos: [],
+    grupos: './grupos-vital-clean',
+    // Sem meta combinada ainda: o painel simplesmente nao mostra a barra.
+    metas: {},
+  },
 };
 
-// Copia usada pela automacao: grava em scripts/dados/.
-const DESTINO = path.join(__dirname, '..', 'dados');
+// DESTINO_DADOS existe para a automacao do GitHub (relatorios-online), que
+// roda uma copia IDENTICA destes arquivos e grava em scripts/dados/. Sem a
+// variavel, grava no dashboard local, como sempre.
+const DESTINO = process.env.DESTINO_DADOS || path.join(
+  __dirname, '..', '..', 'dashboard-trafego', 'dados'
+);
 
 const num = (v) => Number(v || 0);
 
@@ -101,7 +134,8 @@ async function alcanceDoPeriodo(cfg, desde, ate) {
 // ---------------------------------------------------------------
 // Campanhas com investimento no periodo.
 // ---------------------------------------------------------------
-async function campanhas(cfg, desde, ate) {
+async function campanhas(cfg, desde, ate, mapa) {
+  const { grupoDaCampanha, apelido = (n) => n } = mapa;
   const r = await meta.get(`${cfg.conta}/insights`, {
     fields: 'campaign_id,campaign_name,spend,impressions,clicks,actions',
     time_range: JSON.stringify({ since: desde, until: ate }),
@@ -109,14 +143,23 @@ async function campanhas(cfg, desde, ate) {
     limit: 300,
   });
 
-  const lista = (r.data || []).map((d) => ({
-    id: d.campaign_id,
-    nome: d.campaign_name,
-    investimento: num(d.spend),
-    resultados: contarAcao(d, cfg.acao_resultado),
-    impressoes: num(d.impressions),
-    cliques: num(d.clicks),
-  }));
+  // Cada campanha e contada na moeda do seu proprio produto. Antes tudo
+  // era 'purchase': a campanha de formulario aparecia com 6 resultados
+  // quando tinha gerado 276 leads, e parecia um fracasso sem ser.
+  const lista = (r.data || []).map((d) => {
+    const g = grupoDaCampanha(d.campaign_name);
+    return {
+      id: d.campaign_id,
+      nome: apelido(d.campaign_name),
+      grupo: g.id,
+      grupo_nome: g.nome,
+      investimento: num(d.spend),
+      resultados: contarAcao(d, g.acao_resultado),
+      rotulo_resultado: g.rotulo_resultado,
+      impressoes: num(d.impressions),
+      cliques: num(d.clicks),
+    };
+  });
 
   // O status atual nao e mais puxado: ele descreve o agora, enquanto o
   // investimento e do periodo filtrado. Juntos na mesma linha davam a
@@ -168,21 +211,40 @@ async function main() {
     process.exit(1);
   }
 
-  const desde = mesesAtras(cfg.meses);
+  const desde = cfg.desde || mesesAtras(cfg.meses);
   const ate = hojeISO();
+
+  const mapa = require(cfg.grupos || './grupos-cfc');
+  const coleta = criarColeta(mapa);
 
   console.log(`Gerando dados de ${cfg.nome} (${desde} a ${ate})...`);
 
-  const [serie, alc, camps, pub] = await Promise.all([
+
+  // As consultas leves vao em paralelo.
+  const [serie, alc, pub, statusGrupos] = await Promise.all([
     serieDiaria(cfg, desde, ate),
     alcanceDoPeriodo(cfg, desde, ate),
-    campanhas(cfg, desde, ate),
     publico(cfg, desde, ate),
+    coleta.statusDosGrupos(cfg.conta),
   ]);
+
+  // As duas pesadas (campanha-dia e anuncio-dia, ambas paginadas em varios
+  // milhares de linhas) vao em serie: disparadas junto com as outras, a
+  // Meta derruba a rodada inteira com "An unknown error occurred"
+  // (subcode 99), que e como ela sinaliza carga demais de uma vez.
+  const linhasTudo = await coleta.serieDiariaPorCampanha(cfg.conta, desde, ate);
+  const criativos = await coleta.criativosAtivos(cfg.conta, desde, ate, cfg.criativos_historicos);
+
+  const camps = await campanhas(cfg, desde, ate, mapa);
+  const campDia = coleta.campanhasPorDia(linhasTudo);
+  const grupos = coleta.seriesPorGrupo(linhasTudo);
+  const meses = coleta.porMes(linhasTudo);
 
   console.log(`  ${serie.length} dias de serie`);
   console.log(`  ${camps.length} campanhas com investimento`);
   console.log(`  ${pub.length} recortes de publico`);
+  console.log(`  ${Object.keys(grupos).length} grupos de produto`);
+  console.log(`  ${criativos.lista.length} criativos ativos agora`);
 
   const saida = {
     _gerado_por: 'vertice-meta-api/src/gerar-dados-dashboard.js',
@@ -204,6 +266,15 @@ async function main() {
     frequencia_periodo: alc.frequencia,
     metas: cfg.metas,
     campanhas: camps,
+    // Campanha x dia: o painel soma so os dias do filtro, em vez de
+    // ratear o total do periodo inteiro (que inventava gasto atual para
+    // campanha que so rodou meses atras).
+    campanhas_por_dia: campDia,
+    grupos_produto: grupos,
+    status_grupos: statusGrupos,
+    investimento_mensal: meses,
+    criativos_ativos: criativos.lista,
+    criativos_por_dia: criativos.por_dia,
     publico: { idade_genero: pub },
     comercial: {
       ativo: false,
@@ -223,7 +294,7 @@ async function main() {
   const totalGasto = serie.reduce((a, x) => a + x.investimento, 0);
   const totalRes = serie.reduce((a, x) => a + x.resultados, 0);
 
-  console.log(`\nGravado em dashboards/trafego/dados/${cfg.slug}.json`);
+  console.log(`\nGravado em dashboard-trafego/dados/${cfg.slug}.json`);
   console.log(`Periodo: R$ ${totalGasto.toFixed(2)} | ${totalRes} ${cfg.rotulo_resultado.toLowerCase()}`);
 }
 

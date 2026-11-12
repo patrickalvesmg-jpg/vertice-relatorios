@@ -4,6 +4,7 @@
 # No GitHub Actions ela vem do Secret SENHA_RELATORIOS.
 # ============================================================
 senha.txt
+senhas-clientes.json
 .env
 
 # ============================================================

@@ -29,11 +29,15 @@ const path = require('path');
 const crypto = require('crypto');
 
 const RAIZ = path.join(__dirname, '..');
-const ORIGEM = path.join(RAIZ, '..', 'vertice', 'dashboards', 'trafego');
+const ORIGEM = path.join(RAIZ, '..', 'dashboard-trafego');
 const SAIDA = path.join(RAIZ, 'docs');           // GitHub Pages serve /docs
 const CONFIG = path.join(RAIZ, 'senha.txt');     // fora do Git
+// Senha propria por cliente: { "<slug>": "<senha>" }. Fora do Git; no
+// GitHub Actions vem do Secret SENHAS_CLIENTES. Quem nao estiver aqui usa
+// a senha de senha.txt.
+const SENHAS_CLIENTES = path.join(RAIZ, 'senhas-clientes.json');
 
-// O dashboard.html e os dados moram no projeto vertice/. Na automacao
+// O dashboard.html e os dados moram em ../dashboard-trafego. Na automacao
 // (GitHub Actions) esse projeto nao existe, entao ha uma copia em
 // scripts/. A copia local sempre perde para o original: assim nao
 // existem duas versoes do painel divergindo sem ninguem perceber.
@@ -63,6 +67,30 @@ function lerSenha() {
     process.exit(1);
   }
   return s;
+}
+
+// Por que senha por cliente (12/11/2026, entrada da Vital Clean): com uma
+// senha so, o cliente que a recebe consegue abrir /<outro-cliente>/ e ver
+// investimento e vendas de outra empresa — cada pagina leva so os proprios
+// dados, mas a MESMA chave abria todas. Com senha propria, a senha da Vital
+// Clean nao decifra a pagina da CFC, e vice-versa.
+function lerSenhasClientes() {
+  if (!fs.existsSync(SENHAS_CLIENTES)) return {};
+  let mapa;
+  try {
+    mapa = JSON.parse(fs.readFileSync(SENHAS_CLIENTES, 'utf8'));
+  } catch (e) {
+    console.error(`\nsenhas-clientes.json invalido: ${e.message}\n`);
+    process.exit(1);
+  }
+  for (const [slug, s] of Object.entries(mapa)) {
+    if (typeof s !== 'string' || s.trim().length < 6) {
+      console.error(`\nA senha de "${slug}" precisa de pelo menos 6 caracteres.\n`);
+      process.exit(1);
+    }
+    mapa[slug] = s.trim();
+  }
+  return mapa;
 }
 
 // ---------------------------------------------------------------
@@ -293,15 +321,10 @@ function prepararBase(html) {
     '<meta name="robots" content="noindex, nofollow">\n' + ICONES + '\n</head>');
 }
 
-// Pagina de indice: lista os clientes publicados. Sem dado nenhum.
-function paginaIndice(ativos) {
-  const itens = ativos.map((c) => `
-      <a class="item" href="${c.slug}/">
-        <span class="nome">${c.nome}</span>
-        <span class="seg">${c.segmento || ''}</span>
-        <span class="seta">→</span>
-      </a>`).join('');
-
+// Pagina de indice: so a marca, SEM a lista de clientes. Ate 12/11/2026
+// ela listava todos — com mais de um cliente, quem abrisse a raiz veria o
+// nome das outras empresas atendidas. Cada cliente entra pelo proprio link.
+function paginaIndice() {
   return `<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -329,13 +352,16 @@ body{background:#0B0920;color:#fff;font-family:Montserrat,system-ui,sans-serif;
 .seg{font-size:11px;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:.08em}
 .seta{margin-left:auto;color:#A855F7;font-size:17px}
 .rodape{margin-top:30px;text-align:center;font-size:11.5px;color:rgba(255,255,255,.25)}
+.aviso{padding:18px 20px;border-radius:13px;background:rgba(255,255,255,.03);
+  border:1px solid rgba(168,85,247,.13);font-size:14px;line-height:1.55;
+  color:rgba(255,255,255,.75);text-align:center}
 </style>
 </head>
 <body>
   <div class="wrap">
     <div class="marca">VÉRTICE<span>.</span></div>
     <div class="sub">Relatórios de tráfego</div>
-    ${itens}
+    <div class="aviso">Para ver o seu relatório, use o link que você recebeu da Vértice.</div>
     <div class="rodape">Acesso restrito · cada relatório exige senha</div>
   </div>
 </body>
@@ -345,13 +371,14 @@ body{background:#0B0920;color:#fff;font-family:Montserrat,system-ui,sans-serif;
 // ---------------------------------------------------------------
 function main() {
   const senha = lerSenha();
+  const senhasProprias = lerSenhasClientes();
 
   const arquivoDash = origemDe('dashboard.html', 'dashboard.html');
   if (!fs.existsSync(arquivoDash)) {
     console.error(`\nNao encontrei o dashboard em:\n  ${arquivoDash}\n`);
     process.exit(1);
   }
-  console.log(`  painel: ${arquivoDash.includes('vertice' + path.sep + 'dashboards') ? 'original' : 'copia (automacao)'}`);
+  console.log(`  painel: ${arquivoDash.startsWith(ORIGEM) ? 'original' : 'copia (automacao)'}`);
 
   const base = prepararBase(fs.readFileSync(arquivoDash, 'utf8'));
 
@@ -387,7 +414,17 @@ function main() {
       [`dados/${c.slug}.json`]: dados,
     };
 
-    const pacote = criptografar(JSON.stringify(cofre), senha);
+    const propria = Object.prototype.hasOwnProperty.call(senhasProprias, c.slug);
+    // Cliente marcado com senha_propria NUNCA sai com a senha padrao: se o
+    // Secret SENHAS_CLIENTES sumir, publicar com a padrao reabriria o
+    // vazamento entre clientes sem ninguem notar. Melhor deixar no ar a
+    // versao anterior da pagina dele.
+    if (c.senha_propria && !propria) {
+      console.log(`  ERRO: ${c.slug} exige senha propria e ela nao veio (senhas-clientes.json / Secret SENHAS_CLIENTES). Pagina NAO atualizada.`);
+      faltando.push(c.slug);
+      continue;
+    }
+    const pacote = criptografar(JSON.stringify(cofre), propria ? senhasProprias[c.slug] : senha);
     const html = base.replace('</body>', telaSenha(pacote) + '\n</body>');
 
     const pasta = path.join(SAIDA, c.slug);
@@ -396,7 +433,7 @@ function main() {
 
     const kb = (Buffer.byteLength(html, 'utf8') / 1024).toFixed(0);
     const ate = dados.periodo_disponivel?.ate || '?';
-    console.log(`  ${c.slug}/  ${c.nome} (${kb} KB, dados ate ${ate})`);
+    console.log(`  ${c.slug}/  ${c.nome} (${kb} KB, dados ate ${ate}, senha ${propria ? 'propria' : 'padrao'})`);
     publicados.push(c);
   }
 
@@ -410,7 +447,7 @@ function main() {
     process.exit(1);
   }
 
-  fs.writeFileSync(path.join(SAIDA, 'index.html'), paginaIndice(publicados), 'utf8');
+  fs.writeFileSync(path.join(SAIDA, 'index.html'), paginaIndice(), 'utf8');
 
   console.log(`\n${publicados.length} relatorio(s) gerado(s) em docs/`);
   console.log('Cada pagina leva apenas os dados do proprio cliente.');

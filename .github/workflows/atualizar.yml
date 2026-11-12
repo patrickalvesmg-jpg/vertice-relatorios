@@ -25,12 +25,16 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
 
       # A Meta pode recusar a chamada (bloqueio temporario do app, limite de
       # requisicoes, instabilidade). Nesse caso a rodada nao falha: o site
       # segue publicado com os ultimos dados bons, e a proxima hora tenta de
       # novo. Falhar aqui so geraria alarme de hora em hora sem resolver nada.
+      #
+      # Um cliente por vez, e a falha de um nao derruba o outro. Para incluir
+      # cliente novo: acrescente o slug em CLIENTES (e a entrada em
+      # scripts/meta/gerar-dados-dashboard.js e scripts/dados/clientes.json).
       - name: Puxar dados da Meta
         id: puxar
         continue-on-error: true
@@ -40,20 +44,26 @@ jobs:
           META_APP_SECRET: ${{ secrets.META_APP_SECRET }}
           META_BUSINESS_ID: ${{ secrets.META_BUSINESS_ID }}
           META_API_VERSION: v21.0
-        run: node scripts/meta/gerar-dados-dashboard.js cfc-academy
-
-      - name: Avisar se a Meta recusou
-        if: steps.puxar.outcome == 'failure'
+          DESTINO_DADOS: scripts/dados
+          CLIENTES: cfc-academy vital-clean
         run: |
-          echo "::warning::A Meta recusou a chamada nesta rodada. O site segue com os últimos dados bons; a próxima execução tentará de novo."
+          falhou=0
+          for c in $CLIENTES; do
+            echo "::group::$c"
+            node scripts/meta/gerar-dados-dashboard.js "$c" || { falhou=1; echo "::warning::A Meta recusou $c nesta rodada. A página dele segue com os últimos dados bons."; }
+            echo "::endgroup::"
+          done
+          exit $falhou
 
       - name: Gerar as páginas protegidas
         env:
           SENHA: ${{ secrets.SENHA_RELATORIOS }}
+          SENHAS_CLIENTES: ${{ secrets.SENHAS_CLIENTES }}
         run: |
           printf '%s\n' "$SENHA" > senha.txt
+          if [ -n "$SENHAS_CLIENTES" ]; then printf '%s' "$SENHAS_CLIENTES" > senhas-clientes.json; fi
           node scripts/publicar.js
-          rm -f senha.txt
+          rm -f senha.txt senhas-clientes.json
 
       - name: Publicar se algo mudou
         run: |

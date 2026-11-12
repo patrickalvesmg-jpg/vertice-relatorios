@@ -838,9 +838,10 @@ function renderProdutos(){
   el('prodGrid').innerHTML=lista.map((p,i)=>{
     const cor=corProduto(i);
     const fatia=total?(p.investimento/total*100):0;
-    /* Uma campanha: mostra o nome. Varias: diz quantas sao, porque o
-       Academy Pro e um produto so dividido em duas campanhas — o cliente
-       precisa ver que o numero ja vem somado. */
+    /* Uma campanha: mostra o nome. Varias: diz quantas sao, porque um
+       produto pode estar dividido em duas campanhas — o cliente precisa
+       ver que o numero ja vem somado.
+       (Esta pagina vai para todos os clientes: comentario sem nome de cliente.) */
     const camps=p.campanhas.length===1
       ? `<div class="prod-c">${p.campanhas[0]}</div>`
       : `<div class="prod-c">${p.campanhas.length} campanhas somadas:${
@@ -936,8 +937,8 @@ function criativosNoFiltro(){
     };
   });
 
-  /* Criativo pausado so aparece se pesou de verdade. A campanha do CFC
-     Express tem 74 anuncios parados; listar todos enterraria os poucos
+  /* Criativo pausado so aparece se pesou de verdade. Uma campanha pode
+     ter dezenas de anuncios parados; listar todos enterraria os poucos
      que venderam. Corte: 2% do investimento da propria campanha. O
      ativo nunca e cortado — esta no ar, precisa ser visto. */
   const invCamp={};
@@ -1265,8 +1266,8 @@ function renderCampanhas(){
   };
 
   /* Com produtos definidos, as campanhas ficam agrupadas por produto:
-     o Academy Pro sao duas campanhas do mesmo produto, e ve-las soltas
-     na lista sugeria dois negocios diferentes. */
+     duas campanhas do mesmo produto, vistas soltas na lista, sugeriam
+     dois negocios diferentes. */
   const prods=DADOS.campanhas_por_dia?produtosNoFiltro():[];
   if(prods.length){
     tb.innerHTML=prods.map(p=>{

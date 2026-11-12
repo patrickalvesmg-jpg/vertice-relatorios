@@ -8,7 +8,18 @@ const BASE = 'https://graph.facebook.com';
  * @param {string} caminho - ex: 'me' ou 'me/adaccounts'
  * @param {object} params - query params extras (ex: { fields: 'id,name' })
  */
-async function get(caminho, params = {}) {
+const espera = (ms) => new Promise((r) => setTimeout(r, ms));
+
+// Erros que somem sozinhos: a Meta responde assim quando a conta pediu
+// dado demais em pouco tempo. O 'unknown error' (code 1 / subcode 99) e o
+// mais comum ao puxar varios meses no nivel de anuncio por dia — nao ha o
+// que corrigir na chamada, so esperar e repetir.
+function ehTemporario(erro) {
+  const c = erro.code, s = erro.error_subcode;
+  return (c === 1 && s === 99) || c === 2 || c === 4 || c === 17 || c === 341 || c === 613;
+}
+
+async function get(caminho, params = {}, tentativa = 1) {
   const url = new URL(`${BASE}/${config.apiVersion}/${caminho}`);
 
   for (const [chave, valor] of Object.entries(params)) {
@@ -18,6 +29,13 @@ async function get(caminho, params = {}) {
 
   const resposta = await fetch(url);
   const corpo = await resposta.json();
+
+  if (corpo.error && ehTemporario(corpo.error) && tentativa <= 4) {
+    const pausa = tentativa * 5000;
+    console.log(`  aviso: Meta pediu pausa (${corpo.error.message}). Tentando de novo em ${pausa / 1000}s...`);
+    await espera(pausa);
+    return get(caminho, params, tentativa + 1);
+  }
 
   if (!resposta.ok || corpo.error) {
     const erro = corpo.error || {};
@@ -35,4 +53,20 @@ async function get(caminho, params = {}) {
   return corpo;
 }
 
-module.exports = { get };
+// Busca uma URL de paginacao (paging.next) com a mesma tolerancia a
+// erro temporario do get(). O next ja vem com token embutido.
+async function getUrl(url, tentativa = 1) {
+  const resposta = await fetch(url);
+  const corpo = await resposta.json();
+
+  if (corpo.error && ehTemporario(corpo.error) && tentativa <= 4) {
+    const pausa = tentativa * 5000;
+    console.log(`  aviso: Meta pediu pausa na paginacao. Tentando de novo em ${pausa / 1000}s...`);
+    await espera(pausa);
+    return getUrl(url, tentativa + 1);
+  }
+  if (corpo.error) throw new Error(corpo.error.message);
+  return corpo;
+}
+
+module.exports = { get, getUrl };
