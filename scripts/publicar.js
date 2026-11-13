@@ -262,14 +262,13 @@ function prepararBase(html) {
     html.slice(ultima + autoStart.length);
 
   // --- filtro de abertura ---
-  // O painel abre no mes corrente (aplicar('mes')), decisao do Patrick em
-  // 21/08/2026. O site publicado usa o MESMO filtro: antes ele sobrescrevia
-  // com um recorte de 2 meses, e o cliente caia num total acumulado em vez
-  // do mes. Aqui so conferimos que a chamada continua existindo — se o
-  // original mudar de forma, e melhor parar do que publicar em silencio
-  // com um filtro que ninguem escolheu.
-  if (!/aplicar\(\s*'mes'\s*\)\s*;/.test(html)) {
-    console.error('\nNao encontrei aplicar(\'mes\') no dashboard.html.');
+  // O painel abre em ontem + hoje (aplicar('ontemhoje')), decisao do Patrick
+  // em 13/11/2026 (antes: mes corrente, desde 21/08/2026). O site publicado
+  // usa o MESMO filtro do original, sem sobrescrever. Aqui so conferimos que
+  // a chamada continua existindo — se o original mudar de forma, e melhor
+  // parar do que publicar em silencio com um filtro que ninguem escolheu.
+  if (!/aplicar\(\s*'ontemhoje'\s*\)\s*;/.test(html)) {
+    console.error('\nNao encontrei aplicar(\'ontemhoje\') no dashboard.html.');
     console.error('O filtro de abertura mudou — ajuste scripts/publicar.js.\n');
     process.exit(1);
   }

@@ -452,7 +452,9 @@ td.sub{padding-left:26px;}
     <div class="filtro">
       <div class="f-grp">
         <span class="f-lbl">Período</span>
+        <button class="f-btn" data-atalho="ontemhoje">Ontem e hoje</button>
         <button class="f-btn" data-atalho="hoje">Hoje</button>
+        <button class="f-btn" data-atalho="ontem">Ontem</button>
         <button class="f-btn" data-atalho="7">7 dias</button>
         <button class="f-btn" data-atalho="30">30 dias</button>
         <button class="f-btn" data-atalho="mes">Este mês</button>
@@ -605,7 +607,7 @@ async function iniciar(){
     montarCabecalho();
     prepararFiltro();
     prepararRegistro();      // "Do WhatsApp ao contrato", so para quem tem registro
-    aplicar('mes');          // abre no mes corrente, nao no historico todo
+    aplicar('ontemhoje');    // abre em ontem + hoje (pedido do Patrick, 13/11/2026)
 
     progresso(100,'PRONTO');
     setTimeout(()=>{el('loader').classList.add('hidden');el('dash').classList.add('on');},260);
@@ -722,6 +724,8 @@ function aplicar(atalho){
 
   if(atalho==='tudo'){ de=primeiro; ate=ultimo; }
   else if(atalho==='hoje'){ de=ultimo; ate=ultimo; }
+  else if(atalho==='ontem'){ de=ate=addDias(ultimo,-1); if(de<primeiro) de=ate=primeiro; }
+  else if(atalho==='ontemhoje'){ de=addDias(ultimo,-1); ate=ultimo; if(de<primeiro) de=primeiro; }
   else if(atalho==='mes'){ de=ultimo.slice(0,7)+'-01'; ate=ultimo; }
   else if(atalho==='mespassado'){
     const [a,m]=ultimo.split('-').map(Number);
@@ -783,11 +787,18 @@ function render(){
   const s=serieFiltrada();
   // um dia só: mostra a data em vez de "1 dia", e avisa se não for hoje de fato
   // (a carga pode estar atrasada — melhor dizer qual dia é do que fingir que é hoje)
+  // Data local, nao UTC: hoje() viraria o dia as 21h no Brasil.
   let info;
+  const h=hojeLocal(), ontem=addDias(h,-1);
+  const ultimoDado=(DADOS.serie_diaria||[]).slice(-1)[0]?.data;
   if(!s.length) info='Nenhum dia no período';
   else if(s.length===1){
     const d=s[0].data;
-    info=d===hoje()?'Hoje · '+diaCurto(d):diaCurto(d)+' · último dia com dados';
+    info=d===h?'Hoje · '+diaCurto(d)
+      :d===ontem?'Ontem · '+diaCurto(d)
+      :diaCurto(d)+(d===ultimoDado?' · último dia com dados':'');
+  }else if(s.length===2&&s[0].data===ontem&&s[1].data===h){
+    info=`Ontem e hoje · ${diaCurto(ontem)} e ${diaCurto(h)}`;
   }else info=`${s.length} dias no período`;
   el('fInfo').textContent=info;
   renderKPIs(s); renderEvolucao(s);
