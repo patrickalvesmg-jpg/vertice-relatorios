@@ -21,7 +21,9 @@ const ICONES = [
   "<link rel=\"icon\" type=\"image/png\" sizes=\"32x32\" href=\"/img/favicon-32.png\">",
   "<link rel=\"icon\" type=\"image/png\" sizes=\"16x16\" href=\"/img/favicon-16.png\">",
   "<link rel=\"apple-touch-icon\" sizes=\"180x180\" href=\"/img/apple-touch-icon.png\">",
-  "<meta name=\"theme-color\" content=\"#6B21E8\">",
+  // mesma cor do fundo: no celular a barra do navegador "some" no relatorio
+  // (era o roxo #6B21E8, que virava uma faixa clara em cima do fundo escuro)
+  "<meta name=\"theme-color\" content=\"#0B0920\">",
 ].join('\n');
 
 const fs = require('fs');
@@ -136,7 +138,7 @@ function telaSenha(pacote) {
       <input id="iSenha" type="password" placeholder="Senha de acesso" autocomplete="current-password"
         style="width:100%;padding:14px 16px;border-radius:11px;
           background:rgba(255,255,255,.05);border:1px solid rgba(168,85,247,.25);
-          color:#fff;font-size:15px;font-family:inherit;outline:none;text-align:center">
+          color:#fff;font-size:16px;font-family:inherit;outline:none;text-align:center">
       <button type="submit" id="bEntrar"
         style="width:100%;margin-top:12px;padding:14px;border-radius:11px;border:none;
           background:#6B21E8;color:#fff;font-size:14.5px;font-weight:700;
