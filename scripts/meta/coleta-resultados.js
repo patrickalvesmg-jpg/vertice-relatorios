@@ -310,13 +310,20 @@ async function statusPorTipo(conta, linhas) {
     const s = tiposDa.get(l.campanha_id) || new Set();
     s.add(l.tipo.id); tiposDa.set(l.campanha_id, s);
   }
-  const camps = await paginar(`${conta}/campaigns`, { fields: 'id,effective_status', limit: 500 });
+  // Campanha com data de termino ja passada continua ACTIVE na API (o
+  // Gerenciador mostra "Concluida"): as lives de 3 horas da Bia Pimenta
+  // apareciam como "no ar" dias depois (21/11/2026). Ativa = ACTIVE e
+  // sem termino, ou com termino no futuro.
+  const camps = await paginar(`${conta}/campaigns`, { fields: 'id,effective_status,stop_time', limit: 500 });
+  const agora = Date.now();
+  const noAr = (c) => c.effective_status === 'ACTIVE'
+    && (!c.stop_time || new Date(c.stop_time).getTime() > agora);
   const saida = {};
   for (const c of camps) {
     for (const t of tiposDa.get(c.id) || []) {
       const m = saida[t] || { ativas: 0, total: 0 };
       m.total++;
-      if (c.effective_status === 'ACTIVE') m.ativas++;
+      if (noAr(c)) m.ativas++;
       saida[t] = m;
     }
   }

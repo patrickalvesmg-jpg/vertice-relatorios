@@ -116,6 +116,38 @@ const CLIENTES = {
       .trim() || nome,
     metas: {},
   },
+  'bia-pimenta': {
+    slug: 'bia-pimenta',
+    nome: 'Bia Pimenta Acessórios',
+    segmento: 'Acessórios',
+    conta: 'act_1014469044084841',
+    // Primeira fase (21/11/2026): o basico do Gerenciador. O resultado
+    // principal e o clique no botao do Grupo VIP da pagina
+    // bp.biapimenta.com.br/grupovip (conversao personalizada do pixel
+    // "Entrou no Grupo VIP", evento EntrouNoGrupoVIP).
+    objetivo: 'leads',
+    rotulo_resultado: 'Cliques no Grupo VIP',
+    acao_resultado: 'offsite_conversion.custom.1908230113948787',
+    // Comeca na 1a campanha da Vertice (Grupo VIP, 16/11/2026). As
+    // campanhas de venda de 2025 da conta foram de outra agencia.
+    desde: '2026-11-16',
+    meses: 6,
+    criativos_historicos: [],
+    modo: 'resultados',
+    rotulos: {
+      '1908230113948787': { nome: 'Grupo VIP', rotulo: 'Cliques no Grupo VIP',
+        descricao: 'Quem tocou no botão para entrar no Grupo VIP do WhatsApp, na página do anúncio' },
+      video: { nome: 'Lives',
+        descricao: 'Anúncios de divulgação das lives. Conta quem assistiu ao vídeo até o fim ou por pelo menos 15 segundos' },
+    },
+    // "[GRUPO VIP][BIA PIMENTA][CONVERSÃO][VÉRTICE]" -> "[GRUPO VIP]";
+    // "[LIVE][ENGAJAMENTO]" -> "[LIVE]". Tira o nome da loja, o jargao do
+    // objetivo e as marcas internas da Vertice do nome exibido a cliente.
+    apelido: (nome) => String(nome || '')
+      .replace(/\[(BIA PIMENTA|CONVERS[ÃA]O|ENGAJAMENTO|V[ÉE]RTICE|PA)\]/gi, '')
+      .trim() || nome,
+    metas: {},
+  },
 };
 
 // DESTINO_DADOS existe para a automacao do GitHub (relatorios-online), que

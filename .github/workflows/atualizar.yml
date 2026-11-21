@@ -45,7 +45,7 @@ jobs:
           META_BUSINESS_ID: ${{ secrets.META_BUSINESS_ID }}
           META_API_VERSION: v21.0
           DESTINO_DADOS: scripts/dados
-          CLIENTES: cfc-academy vital-clean dom-fios
+          CLIENTES: cfc-academy vital-clean dom-fios bia-pimenta
         run: |
           falhou=0
           for c in $CLIENTES; do
