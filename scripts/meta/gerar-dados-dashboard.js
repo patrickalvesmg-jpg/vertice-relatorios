@@ -86,6 +86,36 @@ const CLIENTES = {
     // Sem meta combinada ainda: o painel simplesmente nao mostra a barra.
     metas: {},
   },
+  'dom-fios': {
+    slug: 'dom-fios',
+    nome: 'Barbearia Dom Fios',
+    segmento: 'Barbearia',
+    conta: 'act_1016534303783660',
+    // Primeira fase (21/11/2026): o relatorio traz o basico do Gerenciador
+    // (investimento, resultado, custo, alcance), sem registro de vendas.
+    objetivo: 'leads',
+    rotulo_resultado: 'Cadastros',
+    acao_resultado: 'lead',
+    // Comeca no dia em que a Vertice subiu a 1a campanha. As campanhas
+    // antigas da conta (mar-nov/2026) foram feitas antes da Vertice.
+    desde: '2026-11-20',
+    meses: 6,
+    criativos_historicos: [],
+    modo: 'resultados',
+    rotulos: {
+      // Hoje o unico formulario no ar e o da vaga de barbeiro. Se entrar
+      // formulario para cliente (agendamento), trocar este texto.
+      leads: { nome: 'Vaga de barbeiro', rotulo: 'Cadastros',
+        descricao: 'Barbeiros que preencheram o formulário da vaga' },
+    },
+    // "[DOM FIOS][CONTRATAR BARBEIRO][LEAD][...][VÉRTICE][PA]" -> tira o
+    // nome da barbearia, o jargao LEAD e as marcas internas da Vertice do
+    // nome exibido ao Lucas.
+    apelido: (nome) => String(nome || '')
+      .replace(/\[(DOM FIOS|LEAD|V[ÉE]RTICE|PA)\]/gi, '')
+      .trim() || nome,
+    metas: {},
+  },
 };
 
 // DESTINO_DADOS existe para a automacao do GitHub (relatorios-online), que
