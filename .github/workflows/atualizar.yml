@@ -53,6 +53,10 @@ jobs:
             node scripts/meta/gerar-dados-dashboard.js "$c" || { falhou=1; echo "::warning::A Meta recusou $c nesta rodada. A página dele segue com os últimos dados bons."; }
             echo "::endgroup::"
           done
+          # Retenção da VSL da Vital Clean (25/11/2026): página /vital-clean/vsl/. Falha aqui não mexe nos relatórios.
+          echo "::group::vsl vital-clean"
+          node scripts/meta/vsl-retencao.js || echo "::warning::A retenção da VSL não veio nesta rodada. A página dela segue com os últimos dados bons."
+          echo "::endgroup::"
           exit $falhou
 
       - name: Gerar as páginas protegidas

@@ -372,6 +372,36 @@ body{background:#0B0920;color:#fff;font-family:Montserrat,system-ui,sans-serif;
 }
 
 // ---------------------------------------------------------------
+// Retencao da VSL da Vital Clean (25/11/2026, pedido do Patrick: "publicar o site e deixar em tempo real").
+// Pagina propria em /vital-clean/vsl/, com os dados de scripts/meta/vsl-retencao.js cifrados com a senha
+// PROPRIA da Vital Clean (nunca a padrao, pela mesma regra do vazamento entre clientes). Sem dados ou sem a
+// senha, a pagina nao e regravada e fica no ar a versao anterior.
+// ---------------------------------------------------------------
+function publicarVSL(senhasProprias) {
+  const arq = path.join(DADOS, 'vital-clean-vsl.json');
+  if (!fs.existsSync(arq)) {
+    console.log('  vsl: vital-clean-vsl.json nao encontrado, pagina da VSL nao atualizada');
+    return;
+  }
+  if (!Object.prototype.hasOwnProperty.call(senhasProprias, 'vital-clean')) {
+    console.log('  ERRO vsl: falta a senha propria da vital-clean (Secret SENHAS_CLIENTES). Pagina da VSL NAO atualizada.');
+    return;
+  }
+  const dados = JSON.parse(fs.readFileSync(arq, 'utf8'));
+  const pacote = criptografar(JSON.stringify({ vsl: dados }), senhasProprias['vital-clean']);
+  const modelo = fs.readFileSync(path.join(__dirname, 'vsl-retencao.html'), 'utf8');
+  let html = modelo
+    .replace('<!--__INICIO__-->', '')
+    .replace('</head>', '<meta name="robots" content="noindex, nofollow">\n' + ICONES + '\n</head>');
+  const fimCorpo = html.lastIndexOf('</body>'); // o ULTIMO: o portao vai no fim da pagina, nunca num comentario
+  html = html.slice(0, fimCorpo) + telaSenha(pacote) + '\n' + html.slice(fimCorpo);
+  const pasta = path.join(SAIDA, 'vital-clean', 'vsl');
+  fs.mkdirSync(pasta, { recursive: true });
+  fs.writeFileSync(path.join(pasta, 'index.html'), html, 'utf8');
+  console.log(`  vital-clean/vsl/  retencao da VSL (${dados.abriu} aberturas desde ${dados.inicioTexto}, senha propria)`);
+}
+
+// ---------------------------------------------------------------
 function main() {
   const senha = lerSenha();
   const senhasProprias = lerSenhasClientes();
@@ -451,6 +481,7 @@ function main() {
   }
 
   fs.writeFileSync(path.join(SAIDA, 'index.html'), paginaIndice(), 'utf8');
+  publicarVSL(senhasProprias);
 
   console.log(`\n${publicados.length} relatorio(s) gerado(s) em docs/`);
   console.log('Cada pagina leva apenas os dados do proprio cliente.');

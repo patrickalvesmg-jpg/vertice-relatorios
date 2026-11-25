@@ -1,0 +1,348 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Retenção da VSL · Vértice</title>
+<!-- Modelo do relatório de retenção da VSL (25/11/2026). Dois usos:
+     - relatório online: scripts/publicar.js cifra os dados e põe o portão de senha no fim do corpo; o portão chama iniciar().
+     - arquivo local: meta-api/src/vital-vsl-retencao.js --html troca o marcador __INICIO__ lá embaixo por desenharVSL(dados).
+     Nada do cliente fica em texto aberto aqui: título, página e trechos vêm dos dados. -->
+<style>
+:root {
+  color-scheme: light;
+  --page: #f9f9f7; --surface: #fcfcfb; --ink: #0b0b0b; --ink-2: #52514e; --muted: #898781;
+  --grid: #e1e0d9; --axis: #c3c2b7; --border: rgba(11,11,11,0.10);
+  --series: #2a78d6; --series-soft: rgba(42,120,214,0.12); --quiet: #c3c2b7; --wash: rgba(11,11,11,0.04);
+  --warn: #fab219; --warn-bg: #fff7e3;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark;
+    --page: #0d0d0d; --surface: #1a1a19; --ink: #f0efec; --ink-2: #c3c2b7; --muted: #898781;
+    --grid: #2c2c2a; --axis: #383835; --border: rgba(255,255,255,0.10);
+    --series: #3987e5; --series-soft: rgba(57,135,229,0.18); --quiet: #52514e; --wash: rgba(255,255,255,0.05);
+    --warn: #fab219; --warn-bg: #2a2310;
+  }
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--page); color: var(--ink); font: 15px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif; }
+main { max-width: 1040px; margin: 0 auto; padding: 32px 20px 56px; }
+.eyebrow { margin: 0 0 4px; color: var(--muted); font-size: 13px; letter-spacing: .02em; }
+h1 { margin: 0; font-size: 26px; line-height: 1.25; font-weight: 650; }
+h2 { margin: 0 0 4px; font-size: 17px; font-weight: 620; }
+.sub { margin: 6px 0 0; color: var(--ink-2); }
+.vivo { margin: 6px 0 0; color: var(--muted); font-size: 13px; }
+.vivo:empty { display: none; }
+.vivo .ponto { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #0ca30c; margin-right: 6px; vertical-align: 1px; }
+.nota { margin: 0 0 16px; color: var(--ink-2); font-size: 14px; }
+.alerta { display: flex; gap: 12px; margin: 20px 0 0; padding: 14px 16px; border-radius: 10px; background: var(--warn-bg); border: 1px solid var(--border); }
+.alerta svg { flex: none; margin-top: 2px; }
+.alerta strong { display: block; }
+.alerta p { margin: 2px 0 0; color: var(--ink-2); font-size: 14px; }
+.tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin: 24px 0; }
+.tile { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 14px 16px; }
+.tile .rot { color: var(--ink-2); font-size: 13px; line-height: 1.3; min-height: 34px; }
+.tile .val { font-size: 30px; font-weight: 650; line-height: 1.1; margin-top: 6px; }
+.tile .pct { color: var(--muted); font-size: 13px; margin-top: 2px; }
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 20px 20px 22px; margin-top: 16px; }
+.grafico { position: relative; }
+.grafico svg { display: block; width: 100%; overflow: visible; }
+.grafico text { font-family: inherit; }
+.tick { fill: var(--muted); font-size: 12px; font-variant-numeric: tabular-nums; }
+.rotulo { fill: var(--ink); font-size: 12.5px; font-weight: 600; }
+.rotulo-2 { fill: var(--ink-2); font-size: 12px; }
+.alvo { outline: none; cursor: crosshair; }
+.alvo:focus-visible { outline: 2px solid var(--series); outline-offset: 2px; }
+.tip { position: absolute; z-index: 5; pointer-events: none; min-width: 190px; max-width: 260px; padding: 10px 12px; border-radius: 10px;
+  background: var(--surface); border: 1px solid var(--border); box-shadow: 0 6px 24px rgba(0,0,0,.14); font-size: 13px; line-height: 1.35; }
+.tip .v { font-size: 15px; font-weight: 650; color: var(--ink); }
+.tip .t { color: var(--ink-2); margin-top: 2px; }
+.tip .t2 { color: var(--muted); margin-top: 4px; }
+.tip .linha { display: inline-block; width: 12px; height: 2px; background: var(--series); vertical-align: middle; margin-right: 6px; border-radius: 1px; }
+.minutos { display: grid; grid-template-columns: repeat(10, 1fr); gap: 2px; margin-top: 10px; }
+.minutos .m { text-align: center; }
+.minutos .m span { display: block; color: var(--muted); font-size: 12px; font-variant-numeric: tabular-nums; }
+.minutos .m b { display: block; font-size: 15px; font-weight: 620; font-variant-numeric: tabular-nums; }
+.minutos-tit { margin: 18px 0 0; padding-top: 14px; border-top: 1px solid var(--grid); color: var(--ink-2); font-size: 13px; }
+.saidas { display: grid; gap: 2px; }
+.linha-s { display: grid; grid-template-columns: minmax(150px, 290px) 1fr 92px; align-items: center; gap: 12px; padding: 5px 6px; border-radius: 8px; }
+.linha-s:hover, .linha-s:focus-visible { background: var(--wash); outline: none; }
+.linha-s .q { font-variant-numeric: tabular-nums; font-size: 13px; font-weight: 600; }
+.linha-s .d { color: var(--ink-2); font-size: 13px; line-height: 1.3; }
+.linha-s.zero .d, .linha-s.zero .q { color: var(--muted); }
+.trilho { height: 14px; position: relative; border-left: 1px solid var(--axis); }
+.barra { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 0 4px 4px 0; background: var(--quiet); }
+.barra.forte { background: var(--series); }
+.linha-s .n { font-size: 13px; color: var(--ink-2); font-variant-numeric: tabular-nums; }
+.linha-s .n b { color: var(--ink); font-size: 14px; }
+table { width: 100%; border-collapse: collapse; font-size: 14px; }
+th { text-align: left; font-weight: 600; color: var(--ink-2); font-size: 13px; padding: 8px 8px; border-bottom: 1px solid var(--axis); }
+td { padding: 7px 8px; border-bottom: 1px solid var(--grid); font-variant-numeric: tabular-nums; vertical-align: top; }
+td.num, th.num { text-align: right; }
+td.trecho { color: var(--ink-2); }
+.tabela-rolagem { overflow-x: auto; }
+footer { margin-top: 28px; color: var(--ink-2); font-size: 13.5px; }
+footer h2 { font-size: 15px; }
+footer ul { margin: 6px 0 0; padding-left: 18px; }
+footer li { margin: 4px 0; }
+footer code { font-size: 12.5px; background: var(--wash); padding: 1px 5px; border-radius: 4px; }
+@media (max-width: 640px) {
+  main { padding: 22px 14px 44px; }
+  h1 { font-size: 22px; }
+  .linha-s { grid-template-columns: 1fr 64px; }
+  .linha-s .rot-s { grid-column: 1 / -1; }
+  .minutos { grid-template-columns: repeat(5, 1fr); row-gap: 10px; }
+}
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <p class="eyebrow" id="eyebrow"></p>
+    <h1 id="titulo"></h1>
+    <p class="sub" id="periodo"></p>
+    <p class="vivo" id="vivo"></p>
+  </header>
+
+  <div class="alerta" id="alerta" hidden>
+    <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 2 21h20L12 3z" fill="var(--warn)"/><path d="M12 10v5M12 17.6v.4" stroke="#0b0b0b" stroke-width="2" stroke-linecap="round"/></svg>
+    <div><strong id="alerta-tit"></strong><p id="alerta-txt"></p></div>
+  </div>
+
+  <section class="tiles" id="tiles" aria-label="Resumo"></section>
+
+  <section class="card">
+    <h2>Quantos ainda estavam assistindo em cada ponto do vídeo</h2>
+    <p class="nota" id="nota-curva"></p>
+    <div class="grafico" id="curva"></div>
+    <p class="minutos-tit">Minuto a minuto (o valor entre dois pontos é estimado)</p>
+    <div class="minutos" id="minutos"></div>
+  </section>
+
+  <section class="card">
+    <h2>Quantos saíram em cada trecho</h2>
+    <p class="nota">Em azul, os trechos onde mais gente foi embora. A lista segue a ordem do vídeo.</p>
+    <div class="saidas" id="saidas"></div>
+  </section>
+
+  <section class="card">
+    <h2>Tabela completa</h2>
+    <div class="tabela-rolagem"><table id="tabela"></table></div>
+  </section>
+
+  <footer>
+    <h2>Como foi medido</h2>
+    <ul id="como"></ul>
+  </footer>
+</main>
+
+<script>
+const $ = (id) => document.getElementById(id);
+const mmss = (s) => `${Math.floor(s / 60)}:${String(Math.round(s % 60)).padStart(2, '0')}`;
+const pc = (a, b) => (b ? Math.round((a / b) * 100) : 0);
+const pessoas = (n) => `${n} ${n === 1 ? 'pessoa' : 'pessoas'}`;
+const quando = (ms) => new Date(ms).toLocaleString('pt-BR', { timeZone: 'America/Fortaleza', day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }).replace(',', ' às');
+const el = (tag, cls, txt) => { const e = document.createElement(tag); if (cls) e.className = cls; if (txt !== undefined) e.textContent = txt; return e; };
+const NS = 'http://www.w3.org/2000/svg';
+const sv = (tag, at) => { const e = document.createElementNS(NS, tag); for (const k in at) e.setAttribute(k, at[k]); return e; };
+
+function desenharVSL(D) {
+const B = D.blocos;
+const comecou = B[0].n;              // o vídeo começou (VSL01Pia, 0:01)
+const fim = B[B.length - 1].n;       // chegou no fim (VSL16Fim)
+
+// ---------- cabeçalho e aviso
+$('eyebrow').textContent = D.pagina || '';
+$('titulo').textContent = D.titulo || 'Retenção da VSL';
+document.title = `${D.titulo || 'Retenção da VSL'} · Vértice`;
+let periodo = `De ${quando(D.inicio)} até ${quando(D.fim)}, contado pelo Pixel do Facebook.`;
+if (D.anuncio) periodo += ` No período, o anúncio gastou R$ ${D.anuncio.gasto.toFixed(2).replace('.', ',')} e levou ${pessoas(D.anuncio.visitas)} pra página.`;
+$('periodo').textContent = periodo;
+if (D.abriu < 100) {
+  $('alerta').hidden = false;
+  $('alerta-tit').textContent = 'Ainda é pouca gente pra cravar';
+  $('alerta-txt').textContent = `Só ${pessoas(D.abriu)} abriram a página, então cada uma mexe ${pc(1, Math.max(comecou, 1))}% na curva. O desenho já aparece, mas um trecho com 1 saída pode ser acaso. A conta inclui quem abriu o link só pra conferir a página. Vale ler de novo depois de umas 100 aberturas.`;
+}
+
+// ---------- números de cima
+const tiles = [
+  ['Abriram a página', D.abriu, ''],
+  ['O vídeo começou', comecou, `${pc(comecou, D.abriu)}% de quem abriu`],
+  ['Tocaram pra ouvir com som', D.deuPlay, `${pc(D.deuPlay, D.abriu)}% de quem abriu`],
+  [`Chegaram no botão (${mmss(D.conviteSeg)})`, D.chegouConvite, `${pc(D.chegouConvite, D.abriu)}% de quem abriu`],
+  ['Viram até o fim', fim, `${pc(fim, D.abriu)}% de quem abriu`],
+  ['Tocaram no botão do WhatsApp', D.schedule, `${pc(D.schedule, D.abriu)}% de quem abriu`],
+];
+for (const [rot, val, sub] of tiles) {
+  const t = el('div', 'tile');
+  t.append(el('div', 'rot', rot), el('div', 'val', String(val)), el('div', 'pct', sub || ' '));
+  $('tiles').append(t);
+}
+
+$('nota-curva').textContent = `100% = quem viu o vídeo começar (${pessoas(comecou)}). Cada ponto é o começo de um trecho do roteiro. A linha vertical marca a hora em que o botão do WhatsApp aparece.`;
+
+// ---------- curva de retenção (SVG, redesenha quando a tela muda de tamanho)
+const pts = B.map((b, i) => ({ ...b, p: pc(b.n, comecou), saiu: i ? B[i - 1].n - b.n : D.abriu - b.n }));
+function curva() {
+  const box = $('curva');
+  box.textContent = '';
+  const W = Math.max(box.clientWidth, 300), H = W < 560 ? 240 : 300;
+  const m = { l: 40, r: 18, t: 30, b: 30 };
+  const pw = W - m.l - m.r, ph = H - m.t - m.b;
+  const X = (s) => m.l + (s / D.duracao) * pw;
+  const Y = (p) => m.t + ph - (p / 100) * ph;
+  const svg = sv('svg', { viewBox: `0 0 ${W} ${H}`, height: H, role: 'img', 'aria-label': 'Curva de retenção da VSL' });
+
+  for (const g of [0, 25, 50, 75, 100]) {
+    svg.append(sv('line', { x1: m.l, x2: W - m.r, y1: Y(g), y2: Y(g), stroke: g === 0 ? 'var(--axis)' : 'var(--grid)', 'stroke-width': 1 }));
+    const t = sv('text', { x: m.l - 8, y: Y(g) + 4, 'text-anchor': 'end', class: 'tick' }); t.textContent = `${g}%`; svg.append(t);
+  }
+  const passo = W < 560 ? 120 : 60;
+  for (let s = 0; s <= D.duracao; s += passo) {
+    const t = sv('text', { x: X(s), y: H - 8, 'text-anchor': 'middle', class: 'tick' }); t.textContent = mmss(s); svg.append(t);
+  }
+
+  // hora do botão
+  const xc = X(D.conviteSeg);
+  svg.append(sv('line', { x1: xc, x2: xc, y1: m.t - 6, y2: m.t + ph, stroke: 'var(--axis)', 'stroke-width': 1 }));
+  const perto = xc > W - 170;
+  const tc = sv('text', { x: perto ? xc - 6 : xc + 6, y: m.t - 10, 'text-anchor': perto ? 'end' : 'start', class: 'rotulo-2' });
+  tc.textContent = `aparece o botão · ${mmss(D.conviteSeg)}`; svg.append(tc);
+
+  // área + linha
+  const linha = pts.map((q, i) => `${i ? 'L' : 'M'}${X(q.seg).toFixed(1)},${Y(q.p).toFixed(1)}`).join(' ');
+  const ult = pts[pts.length - 1];
+  svg.append(sv('path', { d: `${linha} L${X(ult.seg).toFixed(1)},${Y(0)} L${X(pts[0].seg).toFixed(1)},${Y(0)} Z`, fill: 'var(--series-soft)' }));
+  svg.append(sv('path', { d: linha, fill: 'none', stroke: 'var(--series)', 'stroke-width': 2, 'stroke-linejoin': 'round', 'stroke-linecap': 'round' }));
+  const marcas = pts.map((q) => { const c = sv('circle', { cx: X(q.seg), cy: Y(q.p), r: 4, fill: 'var(--series)', stroke: 'var(--surface)', 'stroke-width': 2 }); svg.append(c); return c; });
+
+  // rótulo só no fim (o começo é 100% por definição). Vai embaixo da linha: à esquerda do fim a curva está mais alta
+  const embaixo = ult.p >= 14;
+  const tf = sv('text', { x: X(ult.seg), y: embaixo ? Y(ult.p) + 20 : Y(ult.p) - 12, 'text-anchor': 'end', class: 'rotulo' });
+  tf.textContent = `${ult.p}% no fim · ${pessoas(ult.n)}`; svg.append(tf);
+
+  // passar o mouse / teclado: linha vertical no ponto mais perto + caixa com os números
+  const cruz = sv('line', { y1: m.t, y2: m.t + ph, stroke: 'var(--muted)', 'stroke-width': 1, visibility: 'hidden' });
+  svg.append(cruz);
+  const alvo = sv('rect', { x: m.l, y: m.t - 10, width: pw, height: ph + 10, fill: 'transparent', class: 'alvo', tabindex: 0, 'aria-label': 'Use as setas pra andar pelos pontos' });
+  svg.append(alvo);
+  box.append(svg);
+
+  const tip = el('div', 'tip'); tip.hidden = true; box.append(tip);
+  let atual = -1;
+  function mostra(i) {
+    if (atual >= 0) marcas[atual].setAttribute('r', 4);
+    atual = i; const q = pts[i];
+    marcas[i].setAttribute('r', 6);
+    cruz.setAttribute('x1', X(q.seg)); cruz.setAttribute('x2', X(q.seg)); cruz.setAttribute('visibility', 'visible');
+    tip.textContent = '';
+    const v = el('div', 'v'); v.append(el('span', 'linha'), document.createTextNode(`${pessoas(q.n)} · ${q.p}%`));
+    const prox = pts[i + 1];
+    tip.append(v, el('div', 't', `${mmss(q.seg)}${prox ? '–' + mmss(prox.seg) : ''} · ${q.desc}`),
+      el('div', 't2', i ? `Saíram no trecho anterior: ${q.saiu}` : `Saíram antes do vídeo começar: ${q.saiu}`));
+    tip.hidden = false;
+    const tw = tip.offsetWidth, th = tip.offsetHeight;
+    let left = X(q.seg) + 14; if (left + tw > W) left = X(q.seg) - tw - 14;
+    tip.style.left = `${Math.max(0, left)}px`;
+    tip.style.top = `${Math.min(Math.max(0, Y(q.p) - th / 2), H - th)}px`;
+  }
+  function esconde() { if (atual >= 0) marcas[atual].setAttribute('r', 4); atual = -1; tip.hidden = true; cruz.setAttribute('visibility', 'hidden'); }
+  alvo.addEventListener('pointermove', (e) => {
+    const r = svg.getBoundingClientRect(); const x = ((e.clientX - r.left) / r.width) * W;
+    let melhor = 0; for (let i = 1; i < pts.length; i++) if (Math.abs(X(pts[i].seg) - x) < Math.abs(X(pts[melhor].seg) - x)) melhor = i;
+    if (melhor !== atual) mostra(melhor);
+  });
+  alvo.addEventListener('pointerleave', esconde);
+  alvo.addEventListener('focus', () => mostra(atual >= 0 ? atual : 0));
+  alvo.addEventListener('blur', esconde);
+  alvo.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowRight') { e.preventDefault(); mostra(Math.min(pts.length - 1, atual + 1)); }
+    if (e.key === 'ArrowLeft') { e.preventDefault(); mostra(Math.max(0, atual - 1)); }
+  });
+}
+curva();
+let espera; window.addEventListener('resize', () => { clearTimeout(espera); espera = setTimeout(curva, 120); });
+
+// ---------- minuto a minuto (entre dois pontos, linha reta)
+function noSegundo(s) {
+  if (s <= pts[0].seg) return pts[0].p;
+  for (let i = 1; i < pts.length; i++) if (s <= pts[i].seg) {
+    const a = pts[i - 1], b = pts[i];
+    return a.p + ((b.p - a.p) * (s - a.seg)) / (b.seg - a.seg);
+  }
+  return pts[pts.length - 1].p;
+}
+for (let mi = 0; mi * 60 <= D.duracao; mi++) {
+  const c = el('div', 'm'); c.append(el('span', '', `${mi}:00`), el('b', '', `${Math.round(noSegundo(mi * 60))}%`)); $('minutos').append(c);
+}
+
+// ---------- saídas por trecho
+const linhas = [{ rot: 'Antes do vídeo começar', desc: 'abriu a página e saiu antes do 0:01', saiu: D.abriu - comecou }];
+for (let i = 0; i < B.length - 1; i++) linhas.push({ rot: `${mmss(B[i].seg)}–${mmss(B[i + 1].seg)}`, desc: B[i].desc, saiu: B[i].n - B[i + 1].n });
+const maxSaiu = Math.max(1, ...linhas.map((l) => l.saiu));
+const topo = [...new Set(linhas.map((l) => l.saiu).filter((v) => v > 0))].sort((a, b) => b - a).slice(0, 2);
+for (const l of linhas) {
+  const r = el('div', 'linha-s' + (l.saiu <= 0 ? ' zero' : '')); r.tabIndex = 0;
+  const rot = el('div', 'rot-s'); rot.append(el('div', 'q', l.rot), el('div', 'd', l.desc));
+  const tr = el('div', 'trilho');
+  if (l.saiu > 0) { const b = el('div', 'barra' + (topo.includes(l.saiu) ? ' forte' : '')); b.style.width = `${(l.saiu / maxSaiu) * 100}%`; tr.append(b); }
+  const n = el('div', 'n'); n.append(el('b', '', String(Math.max(l.saiu, 0))), document.createTextNode(l.saiu === 1 ? ' saiu' : ' saíram'));
+  r.title = `${l.rot} · ${l.desc}: ${Math.max(l.saiu, 0)} de ${D.abriu} que abriram a página`;
+  r.append(rot, tr, n); $('saidas').append(r);
+}
+
+// ---------- tabela
+const tab = $('tabela');
+const cab = el('tr'); for (const [t, num] of [['Começa', 0], ['Trecho', 0], ['Chegaram', 1], ['% de quem viu começar', 1], ['% do trecho anterior', 1], ['Saíram no trecho anterior', 1]]) cab.append(el('th', num ? 'num' : '', t));
+const thead = el('thead'); thead.append(cab); tab.append(thead);
+const tb = el('tbody');
+const l0 = el('tr'); l0.append(el('td', '', '-'), el('td', 'trecho', 'abriram a página'), el('td', 'num', String(D.abriu)), el('td', 'num', '-'), el('td', 'num', '-'), el('td', 'num', '-')); tb.append(l0);
+pts.forEach((q, i) => {
+  const ant = i ? pts[i - 1].n : D.abriu;
+  const tr = el('tr');
+  tr.append(el('td', '', mmss(q.seg)), el('td', 'trecho', q.desc), el('td', 'num', String(q.n)), el('td', 'num', `${q.p}%`), el('td', 'num', `${pc(q.n, ant)}%`), el('td', 'num', String(q.saiu)));
+  tb.append(tr);
+});
+tab.append(tb);
+
+// ---------- como foi medido
+const como = [
+  'A página manda um aviso pro Pixel quando a pessoa chega no começo de cada trecho do roteiro, uma vez por visita. Conta também quem está vendo o vídeo ainda mudo, antes de tocar pra ouvir.',
+  D.dobrado ? 'O Pixel recebe cada aviso duas vezes (pelo navegador e pelo servidor). Os números daqui já estão divididos por 2.' : 'O Pixel recebeu cada aviso uma vez só (sem cópia do servidor), então os números estão como vieram.',
+  'Quem volta depois e continua de onde parou não conta os trechos que pulou.',
+  `Os segundos de cada trecho são os do vídeo no ar (${mmss(D.duracao)} no total). Se o vídeo mudar, os segundos precisam ser atualizados no script.`,
+  D.origem === 'local'
+    ? `Gerado em ${quando(D.geradoEm)} por src/vital-vsl-retencao.js --html (pasta meta-api).`
+    : `Atualizado em ${quando(D.geradoEm)} pela automação do relatório online, que roda de hora em hora.`,
+];
+for (const t of como) $('como').append(el('li', '', t));
+}
+
+// ---------- relatório online: o portão de senha decifra o COFRE e chama iniciar()
+function iniciar() {
+  desenharVSL(COFRE.vsl);
+  const v = $('vivo');
+  const ponto = el('span', 'ponto');
+  v.append(ponto, document.createTextNode(`Atualizado às ${new Date(COFRE.vsl.geradoEm).toLocaleTimeString('pt-BR', { timeZone: 'America/Fortaleza', hour: '2-digit', minute: '2-digit' })}. Os dados novos chegam de hora em hora, e esta página se recarrega sozinha quando chegam.`));
+  vigiar();
+}
+// Os números estão cifrados dentro desta página: o dado novo chega quando a automação republica o arquivo.
+// A cada minuto confere se o arquivo mudou no servidor e, se mudou, recarrega (a senha fica guardada nesta aba).
+function vigiar() {
+  let marca = null;
+  const conferir = async () => {
+    try {
+      const r = await fetch(location.pathname, { method: 'HEAD', cache: 'no-store' });
+      const tag = r.headers.get('etag') || r.headers.get('last-modified');
+      if (tag && marca && tag !== marca) { location.reload(); return; }
+      if (tag && !marca) marca = tag;
+    } catch (e) { /* sem rede: segue com o que tem */ }
+  };
+  conferir();
+  setInterval(conferir, 60000);
+}
+</script>
+<!--__INICIO__-->
+</body>
+</html>
